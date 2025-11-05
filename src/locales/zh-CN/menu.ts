@@ -52,4 +52,8 @@ export default {
   "menu.new": "新建",
   "menu.new.post": "文章",
   "menu.new.dynamic": "动态",
+  "menu.new.category": "分类",
+  "menu.manage": "管理",
+  "menu.manage.post": "文章管理",
+  "menu.manage.dynamic": "动态管理",
 };

@@ -5,8 +5,16 @@
 /**
  * 布局组件
  */
-import Footer from './Footer';
-import { Question, SelectLang } from './RightContent';
-import { AvatarDropdown, AvatarName } from './RightContent/AvatarDropdown';
+import Footer from "./Footer";
+import MarkdownEditor from "./MyEditor";
+import { Question, SelectLang } from "./RightContent";
+import { AvatarDropdown, AvatarName } from "./RightContent/AvatarDropdown";
 
-export { AvatarDropdown, AvatarName, Footer, Question, SelectLang };
+export {
+  AvatarDropdown,
+  AvatarName,
+  Footer,
+  MarkdownEditor,
+  Question,
+  SelectLang,
+};

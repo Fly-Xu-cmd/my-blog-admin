@@ -7,7 +7,9 @@ import React, { useState } from "react";
 const NewDynamic: React.FC = () => {
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
-  const [content, setContent] = useState<string | undefined>("");
+  const [content, setContent] = useState<string | undefined>(
+    "## 在这里输入内容"
+  );
   const onSubmit = () => {
     if (!content) {
       message.error("请输入内容");
@@ -45,6 +47,7 @@ const NewDynamic: React.FC = () => {
           <label htmlFor="title">标题:</label>
           <Input
             id="title"
+            placeholder="请输入标题"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -54,6 +57,7 @@ const NewDynamic: React.FC = () => {
           <Input.TextArea
             id="excerpt"
             cols={100}
+            placeholder="请输入摘要"
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
           />

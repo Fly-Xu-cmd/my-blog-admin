@@ -14,9 +14,10 @@ const Settings: ProLayoutProps & {
   fixedHeader: false,
   fixSiderbar: true,
   pwa: true,
-  logo: "https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg",
+  logo: "https://www.svgrepo.com/show/462946/world.svg",
   token: {},
   splitMenus: true,
+  title: "若木的小世界",
 };
 
 export default Settings;
