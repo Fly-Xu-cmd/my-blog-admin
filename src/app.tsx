@@ -5,7 +5,7 @@ import {
   Question,
   SelectLang,
 } from "@/components";
-import { currentUser as queryCurrentUser } from "@/services/ant-design-pro/api";
+import { checkToken } from "@/services/nextjs/login";
 import { LinkOutlined } from "@ant-design/icons";
 import type { Settings as LayoutSettings } from "@ant-design/pro-components";
 import { SettingDrawer } from "@ant-design/pro-components";
@@ -27,16 +27,21 @@ export async function getInitialState(): Promise<{
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
-  const fetchUserInfo = async () => {
+  const checkedToken = async () => {
     try {
-      const msg = await queryCurrentUser({
-        skipErrorHandler: true,
-      });
-      return msg.data;
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        return false;
+      }
+      const res = await checkToken(token);
+      if (res.ok) {
+        return true;
+      }
+      return false;
     } catch (_error) {
       history.push(loginPath);
+      return false;
     }
-    return undefined;
   };
   // 如果不是登录页面，执行
   const { location } = history;
@@ -45,15 +50,20 @@ export async function getInitialState(): Promise<{
       location.pathname
     )
   ) {
-    const currentUser = await fetchUserInfo();
+    const isTokenValid = await checkedToken();
+    if (!isTokenValid) {
+      return {
+        currentUser: { access: "", name: "游客" },
+        settings: defaultSettings as Partial<LayoutSettings>,
+      };
+    }
     return {
-      fetchUserInfo,
-      currentUser,
+      currentUser: { access: "admin", name: "若木" },
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
   return {
-    fetchUserInfo,
+    currentUser: { access: "", name: "游客" },
     settings: defaultSettings as Partial<LayoutSettings>,
   };
 }
@@ -80,10 +90,15 @@ export const layout: RunTimeLayoutConfig = ({
     //   content: initialState?.currentUser?.name,
     // },
     footerRender: () => <Footer />,
-    onPageChange: () => {
+    onPageChange: async () => {
+      console.log("onPageChange", history.location.pathname);
       const { location } = history;
+      const accessToken = localStorage.getItem("accessToken");
+      const isTokenValid = accessToken
+        ? (await checkToken(accessToken)).ok
+        : false;
       // 如果没有登录，重定向到 login
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
+      if (!isTokenValid && location.pathname !== loginPath) {
         history.push(loginPath);
       }
     },
@@ -149,7 +164,8 @@ export const layout: RunTimeLayoutConfig = ({
  * 它基于 axios 和 ahooks 的 useRequest 提供了一套统一的网络请求和错误处理方案。
  * @doc https://umijs.org/docs/max/request#配置
  */
+console.log(process.env);
 export const request: RequestConfig = {
-  baseURL: "http://localhost:8000",
+  baseURL: process.env.BASE_API_URL,
   ...errorConfig,
 };

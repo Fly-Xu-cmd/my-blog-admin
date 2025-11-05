@@ -29,32 +29,10 @@ export default [
     component: "./Welcome",
   },
   {
-    path: "/admin",
-    name: "admin",
-    icon: "crown",
-    access: "canAdmin",
-    routes: [
-      {
-        path: "/admin",
-        redirect: "/admin/sub-page",
-      },
-      {
-        path: "/admin/sub-page",
-        name: "sub-page",
-        component: "./Admin",
-      },
-    ],
-  },
-  {
-    name: "list.table-list",
-    icon: "table",
-    path: "/list",
-    component: "./table-list",
-  },
-  {
     name: "new",
     path: "/new",
     icon: "edit",
+    access: "canAdmin",
     routes: [
       {
         path: "/new",
@@ -69,6 +47,33 @@ export default [
         name: "dynamic",
         path: "/new/dynamic",
         component: "./new-dynamic",
+      },
+      {
+        name: "category",
+        path: "/new/category",
+        component: "./new-category",
+      },
+    ],
+  },
+  {
+    name: "manage",
+    path: "/manage",
+    icon: "setting",
+    access: "canAdmin",
+    routes: [
+      {
+        path: "/manage",
+        redirect: "/manage/post",
+      },
+      {
+        name: "post",
+        path: "/manage/post",
+        component: "./post-manage",
+      },
+      {
+        name: "dynamic",
+        path: "/manage/dynamic",
+        component: "./dynamic-manage",
       },
     ],
   },
