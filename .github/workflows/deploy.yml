@@ -1,0 +1,46 @@
+name: Build and Deploy Admin
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建项目
+        run: npm run build
+
+      - name: 通过 rsync 上传 dist 到服务器
+        uses: burnett01/rsync-deployments@5.2.1
+        with:
+          switches: -avzr --delete
+          path: dist
+          remote_path: /home/www/my-blog-admin
+          remote_host: ${{ secrets.SERVER_HOST }}
+          remote_user: root
+          remote_key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: 在服务器上重启 pm2 服务
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/www/my-blog-admin
+            # 如果没有配置文件，直接通过 pm2 启动或重启服务
+            pm2 restart all || pm2 start npm -- start
