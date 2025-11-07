@@ -42,6 +42,12 @@ jobs:
           key: ${{ secrets.ALIYUN_SSH_KEY }}
           script: |
             cd /home/www/my-blog-admin
-            # 如果没有配置文件，直接通过 pm2 启动或重启服务
+            # 兼容处理：检查服务是否已存在，已存在则重启，不存在则启动
             # 使用 -l 参数指定端口号为 8080
-            pm2 start /root/.nvm/versions/node/v24.4.0/bin/serve --name "my-blog-admin" -- -s /home/www/my-blog-admin/dist -l 8080 -f
+            if pm2 list | grep -q "my-blog-admin"; then
+              echo "服务已存在，执行重启操作..."
+              pm2 restart "my-blog-admin"
+            else
+              echo "服务不存在，执行启动操作..."
+              pm2 start /root/.nvm/versions/node/v24.4.0/bin/serve --name "my-blog-admin" -- -s /home/www/my-blog-admin/dist -l 8080 -f
+            fi
