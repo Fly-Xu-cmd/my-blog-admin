@@ -30,16 +30,16 @@ jobs:
           switches: -avzr --delete
           path: dist
           remote_path: /home/www/my-blog-admin
-          remote_host: ${{ secrets.SERVER_HOST }}
+          remote_host: ${{ secrets.ALIYUN_SERVER_IP }}
           remote_user: root
-          remote_key: ${{ secrets.SERVER_SSH_KEY }}
+          remote_key: ${{ secrets.ALIYUN_SSH_KEY }}
 
       - name: 在服务器上重启 pm2 服务
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: ${{ secrets.SERVER_HOST }}
+          host: ${{ secrets.ALIYUN_SERVER_IP }}
           username: root
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
           script: |
             cd /home/www/my-blog-admin
             # 如果没有配置文件，直接通过 pm2 启动或重启服务
