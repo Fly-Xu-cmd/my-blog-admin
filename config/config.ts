@@ -19,7 +19,7 @@ const {
  * @description 部署时的路径，如果部署在非根目录下，需要配置这个变量
  * @doc https://umijs.org/docs/api/config#publicpath
  */
-const PUBLIC_PATH: string = "/";
+const PUBLIC_PATH: string = "/admin/";
 
 export default defineConfig({
   /**
@@ -30,6 +30,7 @@ export default defineConfig({
   hash: true,
 
   publicPath: PUBLIC_PATH,
+  base: PUBLIC_PATH,
 
   /**
    * @name 兼容性设置
