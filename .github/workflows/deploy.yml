@@ -43,4 +43,5 @@ jobs:
           script: |
             cd /home/www/my-blog-admin
             # 如果没有配置文件，直接通过 pm2 启动或重启服务
-            pm2 start "serve -s /home/www/my-blog-admin/dist -l 8080" --name my-blog-admin
+            pm2 start /root/.nvm/versions/node/v24.4.0/bin/serve --name "my-blog-admin" -- -s /home/www/my-blog-admin/dist
+
