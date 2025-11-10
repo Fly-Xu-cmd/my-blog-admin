@@ -33,21 +33,3 @@ jobs:
           remote_host: ${{ secrets.ALIYUN_SERVER_IP }}
           remote_user: root
           remote_key: ${{ secrets.ALIYUN_SSH_KEY }}
-
-      - name: 在服务器上重启 pm2 服务
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.ALIYUN_SERVER_IP }}
-          username: root
-          key: ${{ secrets.ALIYUN_SSH_KEY }}
-          script: |
-            cd /home/www/my-blog-admin
-            # 兼容处理：检查服务是否已存在，已存在则重启，不存在则启动
-            # 使用 -l 参数指定端口号为 8080
-            if pm2 list | grep -q "my-blog-admin"; then
-              echo "服务已存在，执行重启操作..."
-              pm2 restart "my-blog-admin"
-            else
-              echo "服务不存在，执行启动操作..."
-              pm2 start /root/.nvm/versions/node/v24.4.0/bin/serve --name "my-blog-admin" -- -s /home/www/my-blog-admin/dist -l 8080 -f
-            fi

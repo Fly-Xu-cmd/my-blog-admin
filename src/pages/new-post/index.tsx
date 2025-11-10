@@ -1,5 +1,5 @@
 import { MarkdownEditor } from "@/components";
-import { addPost } from "@/services/nextjs/index";
+import { addPost, getCategories, getTags } from "@/services/nextjs/index";
 import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
 import { PageContainer } from "@ant-design/pro-components";
 import {
@@ -12,9 +12,9 @@ import {
   Upload,
 } from "antd";
 import { useEffect, useState } from "react";
-import { CategoryResponse, TagResponse } from "./model";
 
-const baseUrl = "http://localhost:3000";
+const baseUrl = process.env.BASE_API_URL || "http://localhost:3000/";
+
 const NewPost: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   // 博客发布表单状态
@@ -35,35 +35,41 @@ const NewPost: React.FC = () => {
   >([]);
 
   useEffect(() => {
-    fetch("/api/categories")
-      .then(async (r) => {
-        if (!r.ok) {
-          throw new Error(`Request failed: ${r.status}`);
+    getCategories()
+      .then((r) => {
+        if (r.ok) {
+          const { data } = r;
+          return data;
+        } else {
+          throw new Error(`Request failed: ${r.error}`);
         }
-        const text: CategoryResponse = await r.json();
-        if (!text.ok) return []; // 防止空响应
-        return text.data;
       })
       .then((categories) =>
         setCategoryOptions(
-          categories.map((cat) => ({ label: cat.name, value: cat.id }))
+          categories?.map((cat) => ({
+            label: cat.name || "",
+            value: cat.id || 0,
+          })) || []
         )
       )
       .catch((err) => console.error("加载分类失败:", err));
 
-    fetch("/api/tags")
-      .then(async (r) => {
-        if (!r.ok) {
-          throw new Error(`Request failed: ${r.status}`);
+    getTags()
+      .then((r) => {
+        if (r.ok) {
+          const { data } = r;
+          return data;
+        } else {
+          throw new Error(`Request failed: ${r.error}`);
         }
-        const text: TagResponse = await r.json();
-        if (!text.ok) return []; // 防止空响应
-        return text.data;
       })
       .then((tags) => {
-        setTags(tags.map((tag) => tag.name));
+        setTags(tags?.map((tag) => tag.name || "") || []);
         setTagOptions(
-          tags.map((tag) => ({ label: tag.name, value: tag.name }))
+          tags?.map((tag) => ({
+            label: tag.name || "",
+            value: tag.name || "",
+          })) || []
         );
       })
       .catch((err) => console.error("加载标签失败:", err));
@@ -89,6 +95,7 @@ const NewPost: React.FC = () => {
       return;
     }
     if (info.file.status === "done") {
+      console.log("上传成功:", info.file.response);
       setImageUrl(baseUrl + info.file.response.url);
       setLoading(false);
     }
@@ -146,7 +153,6 @@ const NewPost: React.FC = () => {
         category,
         published,
         tags,
-        slug: title.toLowerCase().replace(/\s+/g, "-"),
       }).then((res: any) => {
         if (res.ok) {
           messageApi.success("发布成功");
