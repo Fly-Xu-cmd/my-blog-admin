@@ -15,6 +15,8 @@ import { Input, message, Modal, Space } from "antd";
 import { useEffect, useRef, useState } from "react";
 import PostCard from "./components/post-card";
 
+const baseUrl = process.env.BASE_API_URL || "http://localhost:3000";
+
 export default function PostManage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -123,6 +125,7 @@ export default function PostManage() {
               fieldProps: {
                 options: categoryOptions,
               },
+              render: (_, record: any) => record.category?.name || "",
               editable: false,
             },
             {
@@ -230,8 +233,8 @@ export default function PostManage() {
               postCard: {
                 id: item.id,
                 title: item.title,
-                category: item.category,
-                img: item.cover,
+                category: item.category?.name,
+                img: baseUrl + item.cover,
                 createdAt: item.createdAt,
               },
             }));

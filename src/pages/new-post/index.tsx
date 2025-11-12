@@ -25,11 +25,11 @@ const NewPost: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [published, setPublished] = useState(true);
   const [fileList, setFileList] = useState<any[]>([]);
-  const [category, setCategory] = useState<number>();
+  const [category, setCategory] = useState<string | undefined>();
   const [categoryOptions, setCategoryOptions] = useState<
     { label: string; value: number }[]
   >([]);
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[] | undefined>([]);
   const [tagOptions, setTagOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -48,7 +48,7 @@ const NewPost: React.FC = () => {
         setCategoryOptions(
           categories?.map((cat) => ({
             label: cat.name || "",
-            value: cat.id || 0,
+            value: cat.id!,
           })) || []
         )
       )
@@ -64,7 +64,6 @@ const NewPost: React.FC = () => {
         }
       })
       .then((tags) => {
-        setTags(tags?.map((tag) => tag.name || "") || []);
         setTagOptions(
           tags?.map((tag) => ({
             label: tag.name || "",
@@ -96,7 +95,7 @@ const NewPost: React.FC = () => {
     }
     if (info.file.status === "done") {
       console.log("上传成功:", info.file.response);
-      setImageUrl(baseUrl + info.file.response.url);
+      setImageUrl(info.file.response.url);
       setLoading(false);
     }
     if (info.file.status === "error") {
@@ -119,7 +118,6 @@ const NewPost: React.FC = () => {
         category,
         published,
         tags,
-        slug: title.toLowerCase().replace(/\s+/g, "-"),
       }).then((res: any) => {
         if (res.ok) {
           messageApi.success("发布成功");
@@ -224,7 +222,7 @@ const NewPost: React.FC = () => {
               {imageUrl ? (
                 <img
                   draggable={false}
-                  src={imageUrl}
+                  src={baseUrl + imageUrl}
                   alt="file"
                   style={{ width: "100%" }}
                 />
@@ -242,7 +240,10 @@ const NewPost: React.FC = () => {
               allowClear
               style={{ width: "100%" }}
               options={categoryOptions || []}
-              onChange={(e) => setCategory(e as number)}
+              value={category}
+              onChange={(e) => {
+                setCategory(e);
+              }}
             />
           </Space>
 
@@ -254,6 +255,7 @@ const NewPost: React.FC = () => {
               style={{ width: "100%" }}
               mode="multiple"
               allowClear
+              value={tags}
               options={
                 tagOptions || [
                   {
@@ -266,7 +268,9 @@ const NewPost: React.FC = () => {
                   },
                 ]
               }
-              onChange={(e) => setTags(e as string[])}
+              onChange={(e) => {
+                setTags(e as string[]);
+              }}
             />
           </Space>
 

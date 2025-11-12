@@ -33,7 +33,13 @@ export default function PostCard({
       <Space direction="vertical" style={{ width: "100%" }}>
         <div style={{ width: 200 }}>{title}</div>
         <div
-          style={{ color: "red", backgroundColor: "#fff4ef", borderRadius: 4 }}
+          style={{
+            width: "fit-content",
+            padding: "0px 8px",
+            color: "red",
+            backgroundColor: "#fff4ef",
+            borderRadius: 4,
+          }}
         >
           {category}
         </div>
