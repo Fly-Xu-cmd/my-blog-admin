@@ -25,7 +25,7 @@ const NewPost: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [published, setPublished] = useState(true);
   const [fileList, setFileList] = useState<any[]>([]);
-  const [category, setCategory] = useState<string | undefined>();
+  const [categoryId, setCategoryId] = useState<number | undefined>();
   const [categoryOptions, setCategoryOptions] = useState<
     { label: string; value: number }[]
   >([]);
@@ -115,7 +115,7 @@ const NewPost: React.FC = () => {
         excerpt,
         content,
         cover: imageUrl,
-        category,
+        categoryId,
         published,
         tags,
       }).then((res: any) => {
@@ -126,7 +126,7 @@ const NewPost: React.FC = () => {
           setContent("");
           setImageUrl("");
           setFileList([]);
-          setCategory(undefined);
+          setCategoryId(undefined);
           setTags([]);
         } else {
           messageApi.error("发布失败");
@@ -148,7 +148,7 @@ const NewPost: React.FC = () => {
         excerpt,
         content,
         cover: imageUrl,
-        category,
+        categoryId,
         published,
         tags,
       }).then((res: any) => {
@@ -159,7 +159,7 @@ const NewPost: React.FC = () => {
           setContent("");
           setImageUrl("");
           setFileList([]);
-          setCategory(undefined);
+          setCategoryId(undefined);
           setTags([]);
         } else {
           messageApi.error("发布失败");
@@ -240,9 +240,9 @@ const NewPost: React.FC = () => {
               allowClear
               style={{ width: "100%" }}
               options={categoryOptions || []}
-              value={category}
+              value={categoryId}
               onChange={(e) => {
-                setCategory(e);
+                setCategoryId(e);
               }}
             />
           </Space>
