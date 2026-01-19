@@ -37,7 +37,6 @@ export default function DynamicManage() {
               title: "动态",
               dataIndex: "title",
               editable: false,
-              search: false,
             },
             {
               title: "创建时间",

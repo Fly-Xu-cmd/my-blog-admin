@@ -12,13 +12,21 @@ export async function addDynamic(options?: { [key: string]: any }) {
 }
 
 // 获取动态列表 GET /api/dynamics
-export async function getDynamics(options?: { [key: string]: any }) {
+export async function getDynamics(
+  params?: {
+    current?: number;
+    pageSize?: number;
+  },
+  options?: { [key: string]: any }
+) {
   return request<API.DynamicList>("/api/dynamics", {
     method: "GET",
     params: {
-      method: "get",
-      ...(options || {}),
+      ...params,
+      current: params?.current || 1,
+      pageSize: params?.pageSize || 10,
     },
+    ...(options || {}),
   });
 }
 
