@@ -6,12 +6,13 @@ import {
   getTags,
   updatePost,
 } from "@/services/nextjs";
+import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
 import {
   ActionType,
   PageContainer,
   ProTable,
 } from "@ant-design/pro-components";
-import { Input, message, Modal, Space } from "antd";
+import { Input, message, Modal, Space, Upload } from "antd";
 import { useEffect, useRef, useState } from "react";
 import PostCard from "./components/post-card";
 
@@ -22,7 +23,10 @@ export default function PostManage() {
   const [newTitle, setNewTitle] = useState("");
   const [postSlug, setPostSlug] = useState("");
   const [newContent, setNewContent] = useState("");
-
+  const [imageUrl, setImageUrl] = useState<string | undefined>("");
+  const [loading, setLoading] = useState(false);
+  const [fileList, setFileList] = useState<any[]>([]);
+  const [isPublished, setIsPublished] = useState(true);
   const [messageApi, contextHolder] = message.useMessage();
   const [tagOptions, setTagOptions] = useState<
     { label: string; value: string }[]
@@ -80,6 +84,36 @@ export default function PostManage() {
         console.error(err);
       });
   }, []);
+
+  const uploadButton = (
+    <button style={{ border: 0, background: "none" }} type="button">
+      {loading ? <LoadingOutlined /> : <PlusOutlined />}
+      <div style={{ marginTop: 8 }}>Upload</div>
+    </button>
+  );
+  const beforeUpload = (file: File) => {
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
+    setFileList([...fileList, file]);
+    if (!isJpgOrPng) {
+      messageApi.error("只能上传 JPG/PNG 格式的图片!");
+    }
+    setLoading(true);
+    return isJpgOrPng;
+  };
+  const handleChange = (info: any) => {
+    if (info.file.status === "uploading") {
+      return;
+    }
+    if (info.file.status === "done") {
+      console.log("上传成功:", info.file.response);
+      setImageUrl(info.file.response.url);
+      setLoading(false);
+    }
+    if (info.file.status === "error") {
+      messageApi.error(`上传失败!${info.file.error}`);
+      setLoading(false);
+    }
+  };
 
   const handleEdit = (record: API.Post) => {
     setIsModalOpen(true);
@@ -215,6 +249,8 @@ export default function PostManage() {
                     setNewTitle(record.title!);
                     setNewContent(record.content!);
                     setPostSlug(record.slug!);
+                    setImageUrl(record.cover);
+                    setIsPublished(record.published);
                     setIsModalOpen(true);
                   }}
                 >
@@ -254,6 +290,8 @@ export default function PostManage() {
             updatePost(postSlug, {
               title: newTitle,
               content: newContent,
+              cover: imageUrl,
+              published: isPublished,
             }).then((res) => {
               if (res.ok) {
                 messageApi.success(`更新 ${postSlug} 成功`);
@@ -279,6 +317,30 @@ export default function PostManage() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
               />
+            </Space>
+            <Space direction="vertical" style={{ width: "100%" }}>
+              <label htmlFor="image">封面图片:</label>
+              <Upload
+                name="file"
+                listType="picture-card"
+                className="avatar-uploader"
+                showUploadList={false}
+                fileList={fileList}
+                action="/api/upload"
+                beforeUpload={beforeUpload}
+                onChange={handleChange}
+              >
+                {imageUrl ? (
+                  <img
+                    draggable={false}
+                    src={baseUrl + imageUrl}
+                    alt="file"
+                    style={{ width: "100%" }}
+                  />
+                ) : (
+                  uploadButton
+                )}
+              </Upload>
             </Space>
             <Space direction="vertical" style={{ width: "100%" }}>
               <label
