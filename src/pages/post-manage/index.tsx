@@ -319,7 +319,12 @@ export default function PostManage() {
               />
             </Space>
             <Space direction="vertical" style={{ width: "100%" }}>
-              <label htmlFor="image">封面图片:</label>
+              <label
+                style={{ fontSize: 16, fontWeight: "bold" }}
+                htmlFor="image"
+              >
+                封面图片:
+              </label>
               <Upload
                 name="file"
                 listType="picture-card"
