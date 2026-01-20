@@ -9,6 +9,8 @@ import Footer from "./Footer";
 import MarkdownEditor from "./MyEditor";
 import { Question, SelectLang } from "./RightContent";
 import { AvatarDropdown, AvatarName } from "./RightContent/AvatarDropdown";
+import SummaryInput from "./SummaryInput";
+import TitleInput from "./TitleInput";
 
 export {
   AvatarDropdown,
@@ -17,4 +19,6 @@ export {
   MarkdownEditor,
   Question,
   SelectLang,
+  SummaryInput,
+  TitleInput,
 };

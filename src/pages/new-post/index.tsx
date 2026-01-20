@@ -1,16 +1,8 @@
-import { MarkdownEditor } from "@/components";
+import { MarkdownEditor, SummaryInput, TitleInput } from "@/components";
 import { addPost, getCategories, getTags } from "@/services/nextjs/index";
 import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
 import { PageContainer } from "@ant-design/pro-components";
-import {
-  Button,
-  Input,
-  message,
-  Popconfirm,
-  Select,
-  Space,
-  Upload,
-} from "antd";
+import { Button, message, Popconfirm, Select, Space, Upload } from "antd";
 import { useEffect, useState } from "react";
 
 const baseUrl = process.env.BASE_API_URL || "http://localhost:3000/";
@@ -186,29 +178,22 @@ const NewPost: React.FC = () => {
         }
       >
         <Space direction="vertical" style={{ width: "100%" }}>
-          <Space direction="vertical">
-            <label htmlFor="title">标题:</label>
-            <Input
-              id="title"
-              placeholder="请输入标题"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <label>标题:</label>
+            <TitleInput
+              content={content}
+              onTitleChange={(val: string) => setTitle(val)}
             />
           </Space>
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label htmlFor="excerpt">摘要:</label>
-            <Input.TextArea
-              id="excerpt"
-              cols={100}
-              placeholder="请输入摘要"
-              maxLength={200}
-              showCount={true}
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
+            <label>摘要:</label>
+            <SummaryInput
+              content={content}
+              onSummaryChange={(val: string) => setExcerpt(val)}
             />
           </Space>
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label htmlFor="image">封面图片:</label>
+            <label>封面图片:</label>
             <Upload
               name="file"
               listType="picture-card"
@@ -233,9 +218,8 @@ const NewPost: React.FC = () => {
           </Space>
 
           <Space direction="vertical">
-            <label htmlFor="categories">分类:</label>
+            <label>分类:</label>
             <Select
-              id="categories"
               placeholder="请选择分类"
               allowClear
               style={{ width: "100%" }}
@@ -248,9 +232,8 @@ const NewPost: React.FC = () => {
           </Space>
 
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label htmlFor="tags">标签:</label>
+            <label>标签:</label>
             <Select
-              id="tags"
               placeholder="请选择标签(多选)"
               style={{ width: "100%" }}
               mode="multiple"
@@ -275,7 +258,7 @@ const NewPost: React.FC = () => {
           </Space>
 
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label htmlFor="content">内容:</label>
+            <label>内容:</label>
             <MarkdownEditor
               height={500}
               value={content}

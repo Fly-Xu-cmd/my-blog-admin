@@ -16,7 +16,6 @@ export default function LoginForm() {
   const { initialState, loading, setInitialState } = useModel("@@initialState");
 
   const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
-    console.log("Success:", values);
     if (!values.username || !values.password) {
       messageApi.error("用户名或密码不能为空");
       return;
@@ -25,24 +24,27 @@ export default function LoginForm() {
       username: values.username,
       password: values.password,
       remember: values.remember,
-    }).then((res) => {
-      if (res.ok) {
-        messageApi.success("登录成功");
-        localStorage.setItem("accessToken", res.data?.token || "");
-        setInitialState({
-          ...initialState,
-          currentUser: {
-            access: "admin",
-            name: "若木",
-          },
-        });
-        if (!loading) {
-          navigate("/");
+    })
+      .then((res) => {
+        console.log("登录接口返回:", res);
+        if (res.ok) {
+          messageApi.success("登录成功");
+          localStorage.setItem("accessToken", res.data?.token || "");
+          setInitialState({
+            ...initialState,
+            currentUser: {
+              access: "admin",
+              name: "若木",
+            },
+          });
+          if (!loading) {
+            navigate("/");
+          }
         }
-      } else {
-        messageApi.error(res.error || "登录失败");
-      }
-    });
+      })
+      .catch(({ response }) => {
+        messageApi.error(response?.data?.error || "登录失败，请稍后重试");
+      });
   };
 
   const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
