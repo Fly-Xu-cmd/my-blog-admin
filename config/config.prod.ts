@@ -195,7 +195,7 @@ export default defineConfig({
       ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION,
       ADMIN_USERNAME,
       ADMIN_PASSWORD,
-      BASE_API_URL: "http://101.132.178.33",
+      BASE_API_URL: "http://admin.xylxf.xyz",
     },
   },
 });
