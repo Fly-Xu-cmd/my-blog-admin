@@ -1,5 +1,5 @@
-import { Button, Input, message, Modal, Popconfirm } from "antd";
-import { useEffect, useRef, useState } from "react";
+import { Button, Input, Modal, message, Popconfirm } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import {
   addCategory,
   addTag,
@@ -9,7 +9,7 @@ import {
   getTags,
   updateCategory,
   updateTag,
-} from "../../services/nextjs";
+} from '../../services/nextjs';
 
 const NewCategory: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -17,8 +17,8 @@ const NewCategory: React.FC = () => {
   const [tags, setTags] = useState<API.Tag[]>([]);
   const [categories, setCategories] = useState<API.Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [addNewName, setAddNewName] = useState("");
-  const [addTitle, setAddTitle] = useState("");
+  const [addNewName, setAddNewName] = useState('');
+  const [addTitle, setAddTitle] = useState('');
 
   // 存储每个 tag 的宽度
   const [widths, setWidths] = useState<Record<number, number>>({});
@@ -42,13 +42,13 @@ const NewCategory: React.FC = () => {
     deleteTag({ name }).then((res: any) => {
       if (res.ok) {
         messageApi.open({
-          type: "success",
-          content: "删除成功",
+          type: 'success',
+          content: '删除成功',
         });
       } else {
         messageApi.open({
-          type: "error",
-          content: res.message || "删除失败",
+          type: 'error',
+          content: res.message || '删除失败',
         });
       }
     });
@@ -57,18 +57,18 @@ const NewCategory: React.FC = () => {
   // 更新标签
   const updateTagName = (name: string, newName: string) => {
     setTags((prev) =>
-      prev.map((t) => (t.name === name ? { ...t, name: newName } : t))
+      prev.map((t) => (t.name === name ? { ...t, name: newName } : t)),
     );
     updateTag({ name, newName }).then((res: any) => {
       if (res.ok) {
         messageApi.open({
-          type: "success",
-          content: "更新成功",
+          type: 'success',
+          content: '更新成功',
         });
       } else {
         messageApi.open({
-          type: "error",
-          content: res.message || "更新失败",
+          type: 'error',
+          content: res.message || '更新失败',
         });
       }
     });
@@ -78,14 +78,14 @@ const NewCategory: React.FC = () => {
     addTag({ name }).then((res: any) => {
       if (res.ok) {
         messageApi.open({
-          type: "success",
-          content: "新增成功",
+          type: 'success',
+          content: '新增成功',
         });
         setTags((prev) => [...prev, { id: res.data?.id || 0, name }]);
       } else {
         messageApi.open({
-          type: "error",
-          content: res.message || "新增失败",
+          type: 'error',
+          content: res.message || '新增失败',
         });
       }
     });
@@ -95,14 +95,14 @@ const NewCategory: React.FC = () => {
     deleteCategory({ name }).then((res: any) => {
       if (res.ok) {
         messageApi.open({
-          type: "success",
-          content: "删除成功",
+          type: 'success',
+          content: '删除成功',
         });
         setCategories((prev) => prev.filter((c) => c.name !== name));
       } else {
         messageApi.open({
-          type: "error",
-          content: res.message || "删除失败",
+          type: 'error',
+          content: res.message || '删除失败',
         });
       }
     });
@@ -112,8 +112,8 @@ const NewCategory: React.FC = () => {
     addCategory({ name: value }).then((res: any) => {
       if (res.ok) {
         messageApi.open({
-          type: "success",
-          content: "新增成功",
+          type: 'success',
+          content: '新增成功',
         });
         setCategories((prev) => [
           ...prev,
@@ -121,8 +121,8 @@ const NewCategory: React.FC = () => {
         ]);
       } else {
         messageApi.open({
-          type: "error",
-          content: res.message || "新增失败",
+          type: 'error',
+          content: res.message || '新增失败',
         });
       }
     });
@@ -132,16 +132,16 @@ const NewCategory: React.FC = () => {
     updateCategory({ name, newName: value }).then((res: any) => {
       if (res.ok) {
         messageApi.open({
-          type: "success",
-          content: "更新成功",
+          type: 'success',
+          content: '更新成功',
         });
         setCategories((prev) =>
-          prev.map((c) => (c.name === name ? { ...c, name: value } : c))
+          prev.map((c) => (c.name === name ? { ...c, name: value } : c)),
         );
       } else {
         messageApi.open({
-          type: "error",
-          content: res.message || "更新失败",
+          type: 'error',
+          content: res.message || '更新失败',
         });
       }
     });
@@ -150,18 +150,18 @@ const NewCategory: React.FC = () => {
   // 处理确认新增标签
   const handleOk = () => {
     if (addNewName.trim()) {
-      if (addTitle.includes("分类")) {
+      if (addTitle.includes('分类')) {
         addCategoryName(addNewName.trim());
       } else {
         addTagName(addNewName.trim());
       }
-      setAddNewName("");
+      setAddNewName('');
       setIsModalOpen(false);
     }
   };
   // 处理取消新增标签
   const handleCancel = () => {
-    setAddNewName("");
+    setAddNewName('');
     setIsModalOpen(false);
   };
 
@@ -169,7 +169,7 @@ const NewCategory: React.FC = () => {
   const measureText = (text: string): number => {
     const span = measureRef.current;
     if (!span) return 0;
-    span.textContent = text || " ";
+    span.textContent = text || ' ';
     const rect = span.getBoundingClientRect();
     return Math.ceil(rect.width);
   };
@@ -196,10 +196,10 @@ const NewCategory: React.FC = () => {
   // 监听窗口尺寸变化（响应式）
   useEffect(() => {
     const handleResize = () => recomputeWidths();
-    window.addEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener('resize', handleResize);
       resizeObserverRef.current?.disconnect();
     };
   }, [tags]);
@@ -211,14 +211,14 @@ const NewCategory: React.FC = () => {
       <span
         ref={measureRef}
         style={{
-          position: "absolute",
-          visibility: "hidden",
-          whiteSpace: "pre",
+          position: 'absolute',
+          visibility: 'hidden',
+          whiteSpace: 'pre',
           fontSize: 14,
           fontFamily:
             "Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', 'Helvetica Neue', sans-serif",
           fontWeight: 400,
-          letterSpacing: "normal",
+          letterSpacing: 'normal',
           padding: 0,
           margin: 0,
         }}
@@ -231,22 +231,22 @@ const NewCategory: React.FC = () => {
         </div>
         <div
           style={{
-            display: "flex",
-            flexWrap: "wrap",
+            display: 'flex',
+            flexWrap: 'wrap',
             gap: 8,
-            alignItems: "center",
+            alignItems: 'center',
           }}
         >
           {categories.map((item) => (
             <div
               key={item.id}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "4px 6px",
-                border: "1px solid #d9d9d9",
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 6px',
+                border: '1px solid #d9d9d9',
                 borderRadius: 6,
-                background: "#fff",
+                background: '#fff',
                 flexShrink: 0,
               }}
             >
@@ -279,7 +279,7 @@ const NewCategory: React.FC = () => {
                 <Button
                   size="small"
                   type="text"
-                  style={{ padding: "0 6px", marginLeft: 6 }}
+                  style={{ padding: '0 6px', marginLeft: 6 }}
                 >
                   ×
                 </Button>
@@ -288,7 +288,7 @@ const NewCategory: React.FC = () => {
           ))}
           <Button
             onClick={() => {
-              setAddTitle("新增分类");
+              setAddTitle('新增分类');
               setIsModalOpen(true);
             }}
           >
@@ -304,22 +304,22 @@ const NewCategory: React.FC = () => {
         </div>
         <div
           style={{
-            display: "flex",
-            flexWrap: "wrap",
+            display: 'flex',
+            flexWrap: 'wrap',
             gap: 8,
-            alignItems: "center",
+            alignItems: 'center',
           }}
         >
           {tags.map((item) => (
             <div
               key={item.id}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "4px 6px",
-                border: "1px solid #d9d9d9",
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 6px',
+                border: '1px solid #d9d9d9',
                 borderRadius: 6,
-                background: "#fff",
+                background: '#fff',
                 flexShrink: 0,
               }}
             >
@@ -350,7 +350,7 @@ const NewCategory: React.FC = () => {
                 <Button
                   size="small"
                   type="text"
-                  style={{ padding: "0 6px", marginLeft: 6 }}
+                  style={{ padding: '0 6px', marginLeft: 6 }}
                 >
                   ×
                 </Button>
@@ -359,7 +359,7 @@ const NewCategory: React.FC = () => {
           ))}
           <Button
             onClick={() => {
-              setAddTitle("新增标签");
+              setAddTitle('新增标签');
               setIsModalOpen(true);
             }}
           >
@@ -370,7 +370,7 @@ const NewCategory: React.FC = () => {
 
       <Modal
         title={addTitle}
-        closable={{ "aria-label": "Custom Close Button" }}
+        closable={{ 'aria-label': 'Custom Close Button' }}
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}

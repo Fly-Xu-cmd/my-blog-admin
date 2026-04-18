@@ -2,13 +2,29 @@ import { MarkdownEditor, SummaryInput, TitleInput } from "@/components";
 import { addPost, getCategories, getTags } from "@/services/nextjs/index";
 import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
 import { PageContainer } from "@ant-design/pro-components";
-import { Button, message, Popconfirm, Select, Space, Upload } from "antd";
-import { useEffect, useState } from "react";
+import {
+  Button,
+  message,
+  Popconfirm,
+  Select,
+  Space,
+  Switch,
+  Upload,
+} from "antd";
+import { useEffect, useId, useState } from "react";
 
 const baseUrl = process.env.BASE_API_URL || "http://localhost:3000/";
 
 const NewPost: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
+  // 生成唯一ID
+  const titleId = useId();
+  const excerptId = useId();
+  const coverId = useId();
+  const categoryId = useId();
+  const tagsId = useId();
+  const contentId = useId();
+
   // 博客发布表单状态
   const [title, setTitle] = useState<string>();
   const [excerpt, setExcerpt] = useState<string>();
@@ -17,7 +33,7 @@ const NewPost: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [published, setPublished] = useState(true);
   const [fileList, setFileList] = useState<any[]>([]);
-  const [categoryId, setCategoryId] = useState<number | undefined>();
+  const [categoryValue, setCategoryValue] = useState<number | undefined>();
   const [categoryOptions, setCategoryOptions] = useState<
     { label: string; value: number }[]
   >([]);
@@ -25,6 +41,8 @@ const NewPost: React.FC = () => {
   const [tagOptions, setTagOptions] = useState<
     { label: string; value: string }[]
   >([]);
+  const [autoGenerateTitle, setAutoGenerateTitle] = useState(false);
+  const [autoGenerateSummary, setAutoGenerateSummary] = useState(false);
 
   useEffect(() => {
     getCategories()
@@ -40,7 +58,7 @@ const NewPost: React.FC = () => {
         setCategoryOptions(
           categories?.map((cat) => ({
             label: cat.name || "",
-            value: cat.id!,
+            value: cat.id || 0,
           })) || []
         )
       )
@@ -97,7 +115,7 @@ const NewPost: React.FC = () => {
   };
   const publishedPost = () => {
     setPublished(true);
-    if (!title || !content) {
+    if ((!title && !autoGenerateTitle) || !content) {
       messageApi.error("缺少标题和内容");
       return;
     }
@@ -107,9 +125,11 @@ const NewPost: React.FC = () => {
         excerpt,
         content,
         cover: imageUrl,
-        categoryId,
+        categoryId: categoryValue,
         published,
         tags,
+        autoGenerateTitle,
+        autoGenerateSummary,
       }).then((res: any) => {
         if (res.ok) {
           messageApi.success("发布成功");
@@ -118,19 +138,21 @@ const NewPost: React.FC = () => {
           setContent("");
           setImageUrl("");
           setFileList([]);
-          setCategoryId(undefined);
+          setCategoryValue(undefined);
           setTags([]);
+          setAutoGenerateTitle(false);
+          setAutoGenerateSummary(false);
         } else {
           messageApi.error("发布失败");
         }
       });
-    } catch (error) {
+    } catch (_error) {
       messageApi.error("发布失败");
     }
   };
   const privatePost = () => {
     setPublished(false);
-    if (!title || !content) {
+    if ((!title && !autoGenerateTitle) || !content) {
       messageApi.error("缺少标题和内容");
       return;
     }
@@ -140,9 +162,11 @@ const NewPost: React.FC = () => {
         excerpt,
         content,
         cover: imageUrl,
-        categoryId,
+        categoryId: categoryValue,
         published,
         tags,
+        autoGenerateTitle,
+        autoGenerateSummary,
       }).then((res: any) => {
         if (res.ok) {
           messageApi.success("发布成功");
@@ -151,13 +175,15 @@ const NewPost: React.FC = () => {
           setContent("");
           setImageUrl("");
           setFileList([]);
-          setCategoryId(undefined);
+          setCategoryValue(undefined);
           setTags([]);
+          setAutoGenerateTitle(false);
+          setAutoGenerateSummary(false);
         } else {
           messageApi.error("发布失败");
         }
       });
-    } catch (error) {
+    } catch (_error) {
       messageApi.error("发布失败");
     }
   };
@@ -179,28 +205,51 @@ const NewPost: React.FC = () => {
       >
         <Space direction="vertical" style={{ width: "100%" }}>
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label>标题:</label>
+            <Space>
+              <label htmlFor={titleId}>标题:</label>
+              <Switch
+                size="small"
+                checked={autoGenerateTitle}
+                onChange={setAutoGenerateTitle}
+                checkedChildren="自动生成"
+                unCheckedChildren="手动输入"
+              />
+            </Space>
             <TitleInput
-              content={content}
+              id={titleId}
+              value={title}
+              disabled={autoGenerateTitle}
               onTitleChange={(val: string) => setTitle(val)}
             />
           </Space>
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label>摘要:</label>
+            <Space>
+              <label htmlFor={excerptId}>摘要:</label>
+              <Switch
+                size="small"
+                checked={autoGenerateSummary}
+                onChange={setAutoGenerateSummary}
+                checkedChildren="自动生成"
+                unCheckedChildren="手动输入"
+              />
+            </Space>
             <SummaryInput
-              content={content}
+              id={excerptId}
+              value={excerpt}
+              disabled={autoGenerateSummary}
               onSummaryChange={(val: string) => setExcerpt(val)}
             />
           </Space>
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label>封面图片:</label>
+            <label htmlFor={coverId}>封面图片:</label>
             <Upload
+              id={coverId}
               name="file"
               listType="picture-card"
               className="avatar-uploader"
               showUploadList={false}
               fileList={fileList}
-              action="/api/upload"
+              action="/api/upload-qiniu"
               beforeUpload={beforeUpload}
               onChange={handleChange}
             >
@@ -218,22 +267,24 @@ const NewPost: React.FC = () => {
           </Space>
 
           <Space direction="vertical">
-            <label>分类:</label>
+            <label htmlFor={categoryId}>分类:</label>
             <Select
+              id={categoryId}
               placeholder="请选择分类"
               allowClear
               style={{ width: "100%" }}
               options={categoryOptions || []}
-              value={categoryId}
+              value={categoryValue}
               onChange={(e) => {
-                setCategoryId(e);
+                setCategoryValue(e);
               }}
             />
           </Space>
 
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label>标签:</label>
+            <label htmlFor={tagsId}>标签:</label>
             <Select
+              id={tagsId}
               placeholder="请选择标签(多选)"
               style={{ width: "100%" }}
               mode="multiple"
@@ -258,8 +309,9 @@ const NewPost: React.FC = () => {
           </Space>
 
           <Space direction="vertical" style={{ width: "100%" }}>
-            <label>内容:</label>
+            <label htmlFor={contentId}>内容:</label>
             <MarkdownEditor
+              id={contentId}
               height={500}
               value={content}
               onChange={setContent}

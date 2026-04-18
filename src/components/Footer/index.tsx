@@ -1,19 +1,19 @@
-import { GithubOutlined } from "@ant-design/icons";
-import { DefaultFooter } from "@ant-design/pro-components";
-import React from "react";
+import { GithubOutlined } from '@ant-design/icons';
+import { DefaultFooter } from '@ant-design/pro-components';
+import React from 'react';
 
 const Footer: React.FC = () => {
   return (
     <DefaultFooter
       style={{
-        background: "none",
+        background: 'none',
       }}
       copyright="Powered by Ant Desgin"
       links={[
         {
-          key: "github",
+          key: 'github',
           title: <GithubOutlined />,
-          href: "https://github.com/Fly-Xu-cmd?tab=repositories",
+          href: 'https://github.com/Fly-Xu-cmd?tab=repositories',
           blankTarget: true,
         },
       ]}

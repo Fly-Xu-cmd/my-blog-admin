@@ -14,6 +14,8 @@ declare namespace API {
     updatedAt?: string;
     slug?: string;
     published?: boolean;
+    autoGenerateTitle?: boolean;
+    autoGenerateSummary?: boolean;
   };
 
   type PostList = {

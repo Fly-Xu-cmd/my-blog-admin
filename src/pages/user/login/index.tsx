@@ -1,8 +1,8 @@
-import { login } from "@/services/nextjs/login";
-import type { FormProps } from "antd";
-import { Button, Checkbox, Form, Input, message } from "antd";
-import { useModel, useNavigate } from "umi";
-import "./style.less";
+import type { FormProps } from 'antd';
+import { Button, Checkbox, Form, Input, message } from 'antd';
+import { useModel, useNavigate } from 'umi';
+import { login } from '@/services/nextjs/login';
+import './style.less';
 
 type FieldType = {
   username?: string;
@@ -13,11 +13,11 @@ type FieldType = {
 export default function LoginForm() {
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
-  const { initialState, loading, setInitialState } = useModel("@@initialState");
+  const { initialState, loading, setInitialState } = useModel('@@initialState');
 
-  const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
+  const onFinish: FormProps<FieldType>['onFinish'] = (values) => {
     if (!values.username || !values.password) {
-      messageApi.error("用户名或密码不能为空");
+      messageApi.error('用户名或密码不能为空');
       return;
     }
     login({
@@ -26,31 +26,31 @@ export default function LoginForm() {
       remember: values.remember,
     })
       .then((res) => {
-        console.log("登录接口返回:", res);
+        console.log('登录接口返回:', res);
         if (res.ok) {
-          messageApi.success("登录成功");
-          localStorage.setItem("accessToken", res.data?.token || "");
+          messageApi.success('登录成功');
+          localStorage.setItem('accessToken', res.data?.token || '');
           setInitialState({
             ...initialState,
             currentUser: {
-              access: "admin",
-              name: "若木",
+              access: 'admin',
+              name: '若木',
             },
           });
           if (!loading) {
-            navigate("/");
+            navigate('/');
           }
         }
       })
       .catch(({ response }) => {
-        messageApi.error(response?.data?.error || "登录失败，请稍后重试");
+        messageApi.error(response?.data?.error || '登录失败，请稍后重试');
       });
   };
 
-  const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
-    errorInfo
+  const onFinishFailed: FormProps<FieldType>['onFinishFailed'] = (
+    errorInfo,
   ) => {
-    console.log("Failed:", errorInfo);
+    console.log('Failed:', errorInfo);
   };
   return (
     <>
@@ -72,7 +72,7 @@ export default function LoginForm() {
               <Form.Item<FieldType>
                 label="用户名"
                 name="username"
-                rules={[{ required: true, message: "请输入用户名" }]}
+                rules={[{ required: true, message: '请输入用户名' }]}
               >
                 <Input />
               </Form.Item>
@@ -80,7 +80,7 @@ export default function LoginForm() {
               <Form.Item<FieldType>
                 label="密码"
                 name="password"
-                rules={[{ required: true, message: "请输入密码" }]}
+                rules={[{ required: true, message: '请输入密码' }]}
               >
                 <Input.Password />
               </Form.Item>
@@ -97,7 +97,7 @@ export default function LoginForm() {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  style={{ width: "100%" }}
+                  style={{ width: '100%' }}
                 >
                   登入
                 </Button>

@@ -1,18 +1,21 @@
-import { addDynamic } from "@/services/nextjs/index";
-import { PageContainer } from "@ant-design/pro-components";
-import MDEditor from "@uiw/react-md-editor";
-import { Button, Input, message, Space } from "antd";
-import React, { useState } from "react";
+import { PageContainer } from '@ant-design/pro-components';
+import MDEditor from '@uiw/react-md-editor';
+import { Button, Input, message, Space } from 'antd';
+import React, { useId, useState } from 'react';
+import { addDynamic } from '@/services/nextjs/index';
 
 const NewDynamic: React.FC = () => {
-  const [title, setTitle] = useState("");
-  const [excerpt, setExcerpt] = useState("");
+  const titleId = useId();
+  const excerptId = useId();
+  const contentId = useId();
+  const [title, setTitle] = useState('');
+  const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState<string | undefined>(
-    "## 在这里输入内容"
+    '## 在这里输入内容',
   );
   const onSubmit = () => {
     if (!content) {
-      message.error("请输入内容");
+      message.error('请输入内容');
       return;
     }
     try {
@@ -22,16 +25,16 @@ const NewDynamic: React.FC = () => {
         content,
       }).then((res: any) => {
         if (res.ok) {
-          message.success("发布成功");
-          setTitle("");
-          setExcerpt("");
-          setContent("");
+          message.success('发布成功');
+          setTitle('');
+          setExcerpt('');
+          setContent('');
         } else {
-          message.error("发布失败");
+          message.error('发布失败');
         }
       });
-    } catch (error) {
-      message.error("发布失败");
+    } catch (_error) {
+      message.error('发布失败');
     }
   };
   return (
@@ -42,32 +45,32 @@ const NewDynamic: React.FC = () => {
         </Button>
       }
     >
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <Space direction="vertical" style={{ width: '100%' }}>
         <Space>
-          <label htmlFor="title">标题:</label>
+          <label htmlFor={titleId}>标题:</label>
           <Input
-            id="title"
+            id={titleId}
             placeholder="请输入标题"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </Space>
         <Space>
-          <label htmlFor="excerpt">摘要:</label>
+          <label htmlFor={excerptId}>摘要:</label>
           <Input.TextArea
-            id="excerpt"
+            id={excerptId}
             cols={100}
             placeholder="请输入摘要"
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
           />
         </Space>
-        <Space direction="vertical" style={{ width: "100%" }}>
-          <label htmlFor="content">内容:</label>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <label htmlFor={contentId}>内容:</label>
           <MDEditor
-            style={{ width: "100%" }}
+            style={{ width: '100%' }}
             height={500}
-            id="content"
+            id={contentId}
             value={content}
             onChange={(value) => setContent(value)}
           />
