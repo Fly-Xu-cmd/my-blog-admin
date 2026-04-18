@@ -1,26 +1,24 @@
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
-import type { ActionType } from '@ant-design/pro-components';
-import { PageContainer, ProTable } from '@ant-design/pro-components';
-import { Input, Modal, message, Space, Upload, Select } from 'antd';
-import { useEffect, useId, useRef, useState } from 'react';
-import MarkdownEditor from '@/components/MyEditor';
+import MarkdownEditor from "@/components/MyEditor";
 import {
   deletePost,
   getCategories,
   getPosts,
   getTags,
   updatePost,
-} from '@/services/nextjs';
-import PostCard from './components/post-card';
-
-const baseUrl = process.env.BASE_API_URL || 'http://localhost:3000';
+} from "@/services/nextjs";
+import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
+import type { ActionType } from "@ant-design/pro-components";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import { Input, message, Modal, Select, Space, Upload } from "antd";
+import { useEffect, useId, useRef, useState } from "react";
+import PostCard from "./components/post-card";
 
 export default function PostManage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [postSlug, setPostSlug] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [imageUrl, setImageUrl] = useState<string | undefined>('');
+  const [newTitle, setNewTitle] = useState("");
+  const [postSlug, setPostSlug] = useState("");
+  const [newContent, setNewContent] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | undefined>("");
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState<any[]>([]);
   const [isPublished, setIsPublished] = useState(true);
@@ -44,12 +42,12 @@ export default function PostManage() {
   const actionRef = useRef<ActionType>(null);
   const valueEnum = {
     true: {
-      text: '公开',
-      status: 'Success',
+      text: "公开",
+      status: "Success",
     },
     false: {
-      text: '隐藏',
-      status: 'default',
+      text: "隐藏",
+      status: "default",
     },
   };
 
@@ -59,13 +57,13 @@ export default function PostManage() {
         if (res.ok) {
           const { data } = res;
           const formatData = data?.map((item) => ({
-            label: item.name || '',
-            value: item.name || '',
+            label: item.name || "",
+            value: item.name || "",
           }));
           setTagOptions(formatData || []);
         } else {
           setTagOptions([]);
-          messageApi.error(res.error || '获取标签列表失败');
+          messageApi.error(res.error || "获取标签列表失败");
         }
       })
       .catch((err) => {
@@ -77,13 +75,13 @@ export default function PostManage() {
         if (res.ok) {
           const { data } = res;
           const formatData = data?.map((item) => ({
-            label: item.name || '',
+            label: item.name || "",
             value: item.id, // 使用 ID 作为值
           }));
           setCategoryOptions(formatData || []);
         } else {
           setCategoryOptions([]);
-          messageApi.error(res.error || '获取分类列表失败');
+          messageApi.error(res.error || "获取分类列表失败");
         }
       })
       .catch((err) => {
@@ -92,30 +90,30 @@ export default function PostManage() {
   }, []);
 
   const uploadButton = (
-    <button style={{ border: 0, background: 'none' }} type="button">
+    <button style={{ border: 0, background: "none" }} type="button">
       {loading ? <LoadingOutlined /> : <PlusOutlined />}
       <div style={{ marginTop: 8 }}>Upload</div>
     </button>
   );
   const beforeUpload = (file: File) => {
-    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
     setFileList([...fileList, file]);
     if (!isJpgOrPng) {
-      messageApi.error('只能上传 JPG/PNG 格式的图片!');
+      messageApi.error("只能上传 JPG/PNG 格式的图片!");
     }
     setLoading(true);
     return isJpgOrPng;
   };
   const handleChange = (info: any) => {
-    if (info.file.status === 'uploading') {
+    if (info.file.status === "uploading") {
       return;
     }
-    if (info.file.status === 'done') {
-      console.log('上传成功:', info.file.response);
+    if (info.file.status === "done") {
+      console.log("上传成功:", info.file.response);
       setImageUrl(info.file.response.url);
       setLoading(false);
     }
-    if (info.file.status === 'error') {
+    if (info.file.status === "error") {
       messageApi.error(`上传失败!${info.file.error}`);
       setLoading(false);
     }
@@ -135,8 +133,8 @@ export default function PostManage() {
           actionRef={actionRef}
           columns={[
             {
-              title: '文章',
-              dataIndex: 'postCard',
+              title: "文章",
+              dataIndex: "postCard",
               editable: false,
               search: false,
               render: (_, record: any) => {
@@ -144,19 +142,19 @@ export default function PostManage() {
               },
             },
             {
-              title: '分类',
-              dataIndex: 'category',
-              valueType: 'select',
+              title: "分类",
+              dataIndex: "category",
+              valueType: "select",
               fieldProps: {
                 options: categoryOptions,
               },
-              render: (_, record: any) => record.category?.name || '',
+              render: (_, record: any) => record.category?.name || "",
               editable: false,
             },
             {
-              title: '标签',
-              dataIndex: 'tags',
-              valueType: 'select',
+              title: "标签",
+              dataIndex: "tags",
+              valueType: "select",
               fieldProps: {
                 options: tagOptions,
               },
@@ -171,7 +169,7 @@ export default function PostManage() {
                           marginRight: 4,
                           padding: 4,
                           borderRadius: 4,
-                          backgroundColor: '#f0f0f0',
+                          backgroundColor: "#f0f0f0",
                         }}
                       >
                         {tag}
@@ -182,24 +180,24 @@ export default function PostManage() {
               },
             },
             {
-              title: '发布',
-              dataIndex: 'published',
+              title: "发布",
+              dataIndex: "published",
               valueEnum,
             },
             {
-              title: '创建时间',
-              dataIndex: 'createdAt',
+              title: "创建时间",
+              dataIndex: "createdAt",
               search: false,
               sorter: (a, b) => {
                 return Date.parse(a.createdAt) - Date.parse(b.createdAt);
               },
               render: (_, record: any) =>
-                record.createdAt.split('.')[0].replace('T', ' '),
+                record.createdAt.split(".")[0].replace("T", " "),
               editable: false,
             },
             {
-              title: '操作',
-              valueType: 'option',
+              title: "操作",
+              valueType: "option",
               width: 160,
               render: (_text, record, _, action) => [
                 <a
@@ -211,17 +209,17 @@ export default function PostManage() {
                       }).then((res) => {
                         if (res.ok) {
                           messageApi.success(
-                            `公开 ${record.title || '文章'} 成功`,
+                            `公开 ${record.title || "文章"} 成功`
                           );
                           action?.reload();
                         } else {
-                          messageApi.error(res.error || '公开文章失败');
+                          messageApi.error(res.error || "公开文章失败");
                         }
                       });
                     }
                   }}
                 >
-                  {record.published ? '隐藏' : '公开'}
+                  {record.published ? "隐藏" : "公开"}
                 </a>,
                 <a
                   key={`delete-${record.id}`}
@@ -230,11 +228,11 @@ export default function PostManage() {
                       deletePost(record.slug).then((res) => {
                         if (res.ok) {
                           messageApi.success(
-                            `删除 ${record.title || '文章'} 成功`,
+                            `删除 ${record.title || "文章"} 成功`
                           );
                           action?.reload();
                         } else {
-                          messageApi.error(res.error || '删除文章失败');
+                          messageApi.error(res.error || "删除文章失败");
                         }
                       });
                     }
@@ -245,9 +243,9 @@ export default function PostManage() {
                 <a
                   key={`edit-${record.id}`}
                   onClick={() => {
-                    setNewTitle(record.title || '');
-                    setNewContent(record.content || '');
-                    setPostSlug(record.slug || '');
+                    setNewTitle(record.title || "");
+                    setNewContent(record.content || "");
+                    setPostSlug(record.slug || "");
                     setImageUrl(record.cover);
                     setIsPublished(record.published);
                     setEditCategory(record.category?.id);
@@ -271,7 +269,7 @@ export default function PostManage() {
                 id: item.id,
                 title: item.title,
                 category: item.category?.name,
-                img: baseUrl + item.cover,
+                img: item.cover,
                 createdAt: item.createdAt,
               },
             }));
@@ -285,7 +283,7 @@ export default function PostManage() {
         <Modal
           title="编辑文章"
           open={isModalOpen}
-          width={'80%'}
+          width={"80%"}
           onOk={(e) => {
             e.preventDefault();
             updatePost(postSlug, {
@@ -301,16 +299,16 @@ export default function PostManage() {
                 actionRef.current?.reload();
                 setIsModalOpen(false);
               } else {
-                messageApi.error(res.error || '更新文章失败');
+                messageApi.error(res.error || "更新文章失败");
               }
             });
           }}
           onCancel={handleCancel}
         >
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <Space direction="vertical" style={{ width: '100%' }}>
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Space direction="vertical" style={{ width: "100%" }}>
               <label
-                style={{ fontSize: 16, fontWeight: 'bold' }}
+                style={{ fontSize: 16, fontWeight: "bold" }}
                 htmlFor={titleId}
               >
                 标题:
@@ -322,9 +320,9 @@ export default function PostManage() {
               />
             </Space>
 
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space direction="vertical" style={{ width: "100%" }}>
               <label
-                style={{ fontSize: 16, fontWeight: 'bold' }}
+                style={{ fontSize: 16, fontWeight: "bold" }}
                 htmlFor={categoryId}
               >
                 分类:
@@ -333,16 +331,16 @@ export default function PostManage() {
                 id={categoryId}
                 placeholder="请选择分类"
                 allowClear
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 options={categoryOptions}
                 value={editCategory}
                 onChange={(val) => setEditCategory(val)}
               />
             </Space>
 
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space direction="vertical" style={{ width: "100%" }}>
               <label
-                style={{ fontSize: 16, fontWeight: 'bold' }}
+                style={{ fontSize: 16, fontWeight: "bold" }}
                 htmlFor={tagsId}
               >
                 标签:
@@ -352,16 +350,16 @@ export default function PostManage() {
                 placeholder="请选择标签"
                 mode="multiple"
                 allowClear
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 options={tagOptions}
                 value={editTags}
                 onChange={(val) => setEditTags(val)}
               />
             </Space>
 
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space direction="vertical" style={{ width: "100%" }}>
               <label
-                style={{ fontSize: 16, fontWeight: 'bold' }}
+                style={{ fontSize: 16, fontWeight: "bold" }}
                 htmlFor={imageId}
               >
                 封面图片:
@@ -380,18 +378,18 @@ export default function PostManage() {
                 {imageUrl ? (
                   <img
                     draggable={false}
-                    src={baseUrl + imageUrl}
+                    src={imageUrl}
                     alt="file"
-                    style={{ width: '100%' }}
+                    style={{ width: "100%" }}
                   />
                 ) : (
                   uploadButton
                 )}
               </Upload>
             </Space>
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space direction="vertical" style={{ width: "100%" }}>
               <label
-                style={{ fontSize: 16, fontWeight: 'bold' }}
+                style={{ fontSize: 16, fontWeight: "bold" }}
                 htmlFor={contentId}
               >
                 内容:
