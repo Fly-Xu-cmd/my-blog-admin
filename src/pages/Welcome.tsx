@@ -1,14 +1,14 @@
-import { getDynamics, getPosts } from "@/services/nextjs";
-import { Line, Pie } from "@ant-design/plots";
-import { PageContainer } from "@ant-design/pro-components";
-import { Card, Space } from "antd";
-import React, { useEffect, useState } from "react";
-import { useModel } from "umi";
+import { Line, Pie } from '@ant-design/plots';
+import { PageContainer } from '@ant-design/pro-components';
+import { Card, Space } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useModel } from 'umi';
+import { getDynamics, getPosts } from '@/services/nextjs';
 
 const Welcome: React.FC = () => {
   const [postData, setPostData] = useState<any[]>([]);
   const [dynamicData, setDynamicData] = useState<any[]>([]);
-  const { initialState, loading } = useModel("@@initialState");
+  const { initialState } = useModel('@@initialState');
 
   console.log('initialState', initialState);
   useEffect(() => {
@@ -28,8 +28,8 @@ const Welcome: React.FC = () => {
   const dynamicYears: any = {};
 
   postData.forEach((item: any) => {
-    const year = item.createdAt.split("T")[0];
-    const category = item.category?.name || "其他";
+    const year = item.createdAt.split('T')[0];
+    const category = item.category?.name || '其他';
     if (!postYears[year]) {
       postYears[year] = 0;
     }
@@ -40,13 +40,13 @@ const Welcome: React.FC = () => {
     categories[category]++;
   });
   Object.keys(postYears).forEach((key) => {
-    lineData.unshift({ year: key, value: postYears[key], category: "博客" });
+    lineData.unshift({ year: key, value: postYears[key], category: '博客' });
   });
   Object.keys(categories).forEach((key) => {
-    pieData.push({ type: key, value: categories[key], category: "博客" });
+    pieData.push({ type: key, value: categories[key], category: '博客' });
   });
   dynamicData.forEach((item: any) => {
-    const year = item.createdAt.split("T")[0];
+    const year = item.createdAt.split('T')[0];
     if (!dynamicYears[year]) {
       dynamicYears[year] = 0;
     }
@@ -56,20 +56,20 @@ const Welcome: React.FC = () => {
     lineData.unshift({
       year: key,
       value: dynamicYears[key],
-      category: "动态",
+      category: '动态',
     });
   });
-  console.log("lineData", lineData);
+  console.log('lineData', lineData);
   lineData.sort((a, b) => {
     return Date.parse(a.year) - Date.parse(b.year);
   });
   const lineConfig = {
     data: lineData,
-    title: "博客和动态数量趋势",
-    xField: "year",
-    yField: "value",
+    title: '博客和动态数量趋势',
+    xField: 'year',
+    yField: 'value',
     point: {
-      shapeField: "square",
+      shapeField: 'square',
       sizeField: 4,
     },
     interaction: {
@@ -80,23 +80,23 @@ const Welcome: React.FC = () => {
     style: {
       lineWidth: 2,
     },
-    colorField: "category",
+    colorField: 'category',
   };
   const pieConfig = {
-    title: "博客文章分类分布",
+    title: '博客文章分类分布',
     data: pieData,
-    angleField: "value",
-    colorField: "type",
+    angleField: 'value',
+    colorField: 'type',
     label: {
-      text: "value",
+      text: 'value',
       style: {
-        fontWeight: "bold",
+        fontWeight: 'bold',
       },
     },
     legend: {
       color: {
         title: false,
-        position: "right",
+        position: 'right',
         rowPadding: 5,
       },
     },

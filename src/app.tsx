@@ -1,22 +1,22 @@
+import { LinkOutlined } from '@ant-design/icons';
+import type { Settings as LayoutSettings } from '@ant-design/pro-components';
+import { SettingDrawer } from '@ant-design/pro-components';
 import {
   AvatarDropdown,
   AvatarName,
   Footer,
   Question,
   SelectLang,
-} from "@/components";
-import { checkToken } from "@/services/nextjs/login";
-import { LinkOutlined } from "@ant-design/icons";
-import type { Settings as LayoutSettings } from "@ant-design/pro-components";
-import { SettingDrawer } from "@ant-design/pro-components";
-import "@ant-design/v5-patch-for-react-19";
-import type { RequestConfig, RunTimeLayoutConfig } from "@umijs/max";
-import { history, Link } from "@umijs/max";
-import defaultSettings from "../config/defaultSettings";
-import { errorConfig } from "./requestErrorConfig";
+} from '@/components';
+import { checkToken } from '@/services/nextjs/login';
+import '@ant-design/v5-patch-for-react-19';
+import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
+import { history, Link } from '@umijs/max';
+import defaultSettings from '../config/defaultSettings';
+import { errorConfig } from './requestErrorConfig';
 
-const isDev = process.env.NODE_ENV === "development";
-const loginPath = "/user/login";
+const isDev = process.env.NODE_ENV === 'development';
+const loginPath = '/user/login';
 
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
@@ -29,7 +29,7 @@ export async function getInitialState(): Promise<{
 }> {
   const checkedToken = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem('accessToken');
       if (!token) {
         return false;
       }
@@ -46,24 +46,24 @@ export async function getInitialState(): Promise<{
   // 如果不是登录页面，执行
   const { location } = history;
   if (
-    ![loginPath, "/user/register", "/user/register-result"].includes(
-      location.pathname
+    ![loginPath, '/user/register', '/user/register-result'].includes(
+      location.pathname,
     )
   ) {
     const isTokenValid = await checkedToken();
     if (!isTokenValid) {
       return {
-        currentUser: { access: "", name: "游客" },
+        currentUser: { access: '', name: '游客' },
         settings: defaultSettings as Partial<LayoutSettings>,
       };
     }
     return {
-      currentUser: { access: "admin", name: "若木" },
+      currentUser: { access: 'admin', name: '若木' },
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
   return {
-    currentUser: { access: "", name: "游客" },
+    currentUser: { access: '', name: '游客' },
     settings: defaultSettings as Partial<LayoutSettings>,
   };
 }
@@ -91,9 +91,9 @@ export const layout: RunTimeLayoutConfig = ({
     // },
     footerRender: () => <Footer />,
     onPageChange: async () => {
-      console.log("onPageChange", history.location.pathname);
+      console.log('onPageChange', history.location.pathname);
       const { location } = history;
-      const accessToken = localStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem('accessToken');
       const isTokenValid = accessToken
         ? (await checkToken(accessToken)).ok
         : false;
@@ -104,22 +104,22 @@ export const layout: RunTimeLayoutConfig = ({
     },
     bgLayoutImgList: [
       {
-        src: "https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr",
+        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr',
         left: 85,
         bottom: 100,
-        height: "303px",
+        height: '303px',
       },
       {
-        src: "https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr",
+        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr',
         bottom: -68,
         right: -45,
-        height: "303px",
+        height: '303px',
       },
       {
-        src: "https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr",
+        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr',
         bottom: 0,
         left: 0,
-        width: "331px",
+        width: '331px',
       },
     ],
     links: isDev

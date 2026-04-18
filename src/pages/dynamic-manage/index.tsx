@@ -1,21 +1,21 @@
-import MarkdownEditor from "@/components/MyEditor";
-import { deleteDynamic, getDynamics, updateDynamic } from "@/services/nextjs";
 import {
-  ActionType,
+  type ActionType,
   PageContainer,
   ProTable,
-} from "@ant-design/pro-components";
-import MarkdownPreview from "@uiw/react-markdown-preview";
-import { message, Modal, Space } from "antd";
-import { useRef, useState } from "react";
+} from '@ant-design/pro-components';
+import MarkdownPreview from '@uiw/react-markdown-preview';
+import { Modal, message, Space } from 'antd';
+import { useRef, useState } from 'react';
+import MarkdownEditor from '@/components/MyEditor';
+import { deleteDynamic, getDynamics, updateDynamic } from '@/services/nextjs';
 
 export default function DynamicManage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [detailContent, setDetailContent] = useState("");
-  const [dynamicId, setDynamicId] = useState("");
-  const [newContent, setNewContent] = useState("");
+  const [title, setTitle] = useState('');
+  const [detailContent, setDetailContent] = useState('');
+  const [dynamicId, setDynamicId] = useState('');
+  const [newContent, setNewContent] = useState('');
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -34,26 +34,26 @@ export default function DynamicManage() {
           actionRef={actionRef}
           columns={[
             {
-              title: "动态",
-              dataIndex: "title",
+              title: '动态',
+              dataIndex: 'title',
               editable: false,
             },
             {
-              title: "创建时间",
-              dataIndex: "createdAt",
+              title: '创建时间',
+              dataIndex: 'createdAt',
               search: false,
               sorter: (a, b) => {
                 return Date.parse(a.createdAt) - Date.parse(b.createdAt);
               },
               render: (_, record: any) =>
-                record.createdAt.split(".")[0].replace("T", " "),
+                record.createdAt.split('.')[0].replace('T', ' '),
               editable: false,
             },
             {
-              title: "操作",
-              valueType: "option",
+              title: '操作',
+              valueType: 'option',
               width: 160,
-              render: (text, record, _, action) => [
+              render: (_text, record, _, action) => [
                 <a
                   key={`delete-${record.id}`}
                   onClick={() => {
@@ -62,7 +62,7 @@ export default function DynamicManage() {
                         messageApi.success(`删除 ${record.title} 成功`);
                         action?.reload();
                       } else {
-                        messageApi.error(res.error || "删除动态失败");
+                        messageApi.error(res.error || '删除动态失败');
                       }
                     });
                   }}
@@ -109,7 +109,7 @@ export default function DynamicManage() {
         <Modal
           title="编辑动态"
           open={isModalOpen}
-          width={"80%"}
+          width={'80%'}
           onOk={(e) => {
             e.preventDefault();
             updateDynamic(Number(dynamicId), {
@@ -120,16 +120,16 @@ export default function DynamicManage() {
                 actionRef.current?.reload();
                 setIsModalOpen(false);
               } else {
-                messageApi.error(res.error || "更新动态失败");
+                messageApi.error(res.error || '更新动态失败');
               }
             });
           }}
           onCancel={handleCancel}
         >
-          <Space direction="vertical" style={{ width: "100%" }}>
-            <Space direction="vertical" style={{ width: "100%" }}>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
               <label
-                style={{ fontSize: 16, fontWeight: "bold" }}
+                style={{ fontSize: 16, fontWeight: 'bold' }}
                 htmlFor="content"
               >
                 内容:
@@ -141,26 +141,26 @@ export default function DynamicManage() {
         <Modal
           title="动态详情"
           open={isDetailModalOpen}
-          width={"60%"}
+          width={'60%'}
           onCancel={() => {
             setIsDetailModalOpen(false);
           }}
         >
-          <Space direction="vertical" style={{ width: "100%" }}>
+          <Space direction="vertical" style={{ width: '100%' }}>
             <Space
-              style={{ width: "100%" }}
+              style={{ width: '100%' }}
               direction="vertical"
               align="center"
             >
               <label
-                style={{ fontSize: 16, fontWeight: "bold" }}
+                style={{ fontSize: 16, fontWeight: 'bold' }}
                 htmlFor="title"
               ></label>
               <h2>{title}</h2>
             </Space>
-            <Space direction="vertical" style={{ width: "100%" }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
               <div
-                style={{ width: "100%", border: "1px solid #ccc", padding: 10 }}
+                style={{ width: '100%', border: '1px solid #ccc', padding: 10 }}
               >
                 <MarkdownPreview
                   source={detailContent}

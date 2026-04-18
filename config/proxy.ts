@@ -20,10 +20,10 @@ export default {
     //     // 依赖 origin 的功能可能需要这个，比如 cookie
     //     changeOrigin: true,
     //   },
-    "/api/": {
-      target: "http://localhost:3000",
+    '/api/': {
+      target: 'http://localhost:3000',
       // changeOrigin: true,
-      pathRewrite: { "^": "" },
+      pathRewrite: { '^': '' },
     },
   },
   /**
@@ -32,17 +32,17 @@ export default {
    */
   test: {
     // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
-    "/api/": {
-      target: "https://proapi.azurewebsites.net",
+    '/api/': {
+      target: 'https://proapi.azurewebsites.net',
       changeOrigin: true,
-      pathRewrite: { "^": "" },
+      pathRewrite: { '^': '' },
     },
   },
   pre: {
-    "/api/": {
-      target: "your pre url",
+    '/api/': {
+      target: 'your pre url',
       changeOrigin: true,
-      pathRewrite: { "^": "" },
+      pathRewrite: { '^': '' },
     },
   },
 };
