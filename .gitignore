@@ -40,3 +40,6 @@ build
 
 # Trae IDE
 .trae
+
+# Claude Code
+.claude/

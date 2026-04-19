@@ -13,7 +13,7 @@ import '@ant-design/v5-patch-for-react-19';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import defaultSettings from '../config/defaultSettings';
-import { errorConfig, getThrottleCache, clearThrottleCache, configureThrottle, setThrottleEnabled } from './requestErrorConfig';
+import { errorConfig } from './requestErrorConfig';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
@@ -168,6 +168,3 @@ export const request: RequestConfig = {
   baseURL: process.env.BASE_API_URL,
   ...errorConfig,
 };
-
-// 节流控制 API 导出
-export { getThrottleCache, clearThrottleCache, configureThrottle, setThrottleEnabled };
