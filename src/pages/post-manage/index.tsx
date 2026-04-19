@@ -122,6 +122,10 @@ export default function PostManage() {
   // handleEdit function removed as it's unused
   const handleCancel = () => {
     setIsModalOpen(false);
+    // 修复 Modal 关闭后页面滚动失效的问题
+    // @uiw/react-md-editor 可能会修改 body 样式，关闭时需要清理
+    document.body.style.overflow = "";
+    document.body.style.position = "";
   };
 
   return (
