@@ -7,13 +7,6 @@ import proxy from "./proxy";
 
 import routes from "./routes";
 
-const {
-  REACT_APP_ENV = "production",
-  ADMIN_USERNAME = "Fly",
-  ADMIN_PASSWORD = "Xf@110300",
-  BASE_API_URL = "https://admin.xylxf.xyz",
-} = process.env;
-
 /**
  * @name 使用公共路径
  * @description 部署时的路径，如果部署在非根目录下，需要配置这个变量
@@ -191,10 +184,10 @@ export default defineConfig({
    */
   define: {
     "process.env": {
-      REACT_APP_ENV,
-      ADMIN_USERNAME,
-      ADMIN_PASSWORD,
-      BASE_API_URL,
+      REACT_APP_ENV: "production",
+      ADMIN_USERNAME: "Fly",
+      ADMIN_PASSWORD: "Xf@110300",
+      BASE_API_URL: "https://admin.xylxf.xyz",
     },
   },
 });
