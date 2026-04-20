@@ -189,10 +189,10 @@ export default defineConfig({
    */
   define: {
     "process.env": {
-      REACT_APP_ENV: "production",
-      ADMIN_USERNAME: "Fly",
-      ADMIN_PASSWORD: "Xf@110300",
-      BASE_API_URL: "https://admin.xylxf.xyz",
+      REACT_APP_ENV: REACT_APP_ENV,
+      ADMIN_USERNAME: ADMIN_USERNAME,
+      ADMIN_PASSWORD: ADMIN_PASSWORD,
+      BASE_API_URL: BASE_API_URL,
     },
   },
 });
