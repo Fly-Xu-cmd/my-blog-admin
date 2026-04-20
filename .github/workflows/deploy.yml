@@ -22,7 +22,7 @@ jobs:
         run: npm ci --registry=https://registry.npmmirror.com
 
       - name: 构建项目
-        run: npm run build
+        run: npm run build:prod
 
       - name: 通过 rsync 上传 dist 到服务器
         uses: burnett01/rsync-deployments@5.2.1
