@@ -9,7 +9,6 @@ import routes from "./routes";
 
 const {
   REACT_APP_ENV = "production",
-  ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION = "site",
   ADMIN_USERNAME = "Fly",
   ADMIN_PASSWORD = "Xf@110300",
   BASE_API_URL = "https://admin.xylxf.xyz",
@@ -193,7 +192,6 @@ export default defineConfig({
   define: {
     "process.env": {
       REACT_APP_ENV,
-      ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION,
       ADMIN_USERNAME,
       ADMIN_PASSWORD,
       BASE_API_URL,
