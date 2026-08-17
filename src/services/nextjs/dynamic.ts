@@ -24,7 +24,8 @@ export async function getDynamics(
     params: {
       ...params,
       current: params?.current || 1,
-      pageSize: params?.pageSize || 10,
+      // 后端使用 size 而非 pageSize 分页
+      size: params?.pageSize || 10,
     },
     ...(options || {}),
   });

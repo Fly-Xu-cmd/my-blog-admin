@@ -39,7 +39,7 @@ export async function updatePost(
   options?: { [key: string]: any }
 ) {
   return request<API.PostList>(`/api/posts/${slug}`, {
-    method: "Put",
+    method: "PUT",
     data: {
       method: "put",
       ...(options || {}),

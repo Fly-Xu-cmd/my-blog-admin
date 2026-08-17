@@ -1,5 +1,7 @@
-import MDEditor, { commands } from "@uiw/react-md-editor";
-import { useId } from "react";
+import { commands } from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import MDEditor from '@uiw/react-md-editor';
+import { useId } from 'react';
 
 export default function MarkdownEditor(props: {
   value: string;
@@ -12,39 +14,34 @@ export default function MarkdownEditor(props: {
     value: initialValue,
     onChange,
     height = 420,
-    baseUrl = "http://localhost:3000",
     id,
   } = props;
 
-  // 生成唯一ID用于SVG可访问性
   const uploadImageTitleId = useId();
 
-  // 上传逻辑
   const uploadImage = async (file: File) => {
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
 
-      const res = await fetch("/api/upload-qiniu", {
-        method: "POST",
+      const res = await fetch('/api/upload-qiniu', {
+        method: 'POST',
         body: formData,
       });
       const data = await res.json();
 
-      // 例如返回 data.url = "/uploads/filename.jpg"
       if (data.ok && data.url) return data.url;
-      throw new Error("无效的上传响应");
+      throw new Error('无效的上传响应');
     } catch (err) {
-      console.error("上传失败:", err);
+      console.error('上传失败:', err);
       return null;
     }
   };
 
-  // 自定义上传按钮
   const uploadCommand = {
-    name: "upload-image",
-    keyCommand: "upload-image",
-    buttonProps: { "aria-label": "upload image" },
+    name: 'upload-image',
+    keyCommand: 'upload-image',
+    buttonProps: { 'aria-label': 'upload image' },
     icon: (
       <svg
         viewBox="0 0 1024 1024"
@@ -59,21 +56,18 @@ export default function MarkdownEditor(props: {
       </svg>
     ),
     execute: async (_state: any, api: any) => {
-      // 创建隐藏文件选择器
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
       input.onchange = async () => {
         const file = input.files?.[0];
         if (!file) return;
 
         const url = await uploadImage(file);
         if (url) {
-          // 上传成功：替换为真实链接
           api.replaceSelection(`![image](${url})\n`);
         } else {
-          // 上传失败：使用占位
-          api.replaceSelection(`![image]()\n`);
+          api.replaceSelection('![image]()\n');
         }
       };
       input.click();
@@ -87,10 +81,14 @@ export default function MarkdownEditor(props: {
         value={initialValue}
         onChange={onChange}
         height={height}
+        preview="live"
+        previewOptions={{
+          remarkPlugins: [remarkGfm],
+        }}
         commands={[
-          ...commands.getCommands(), // ✅ 保留默认工具栏
+          ...commands.getCommands(),
           commands.divider,
-          uploadCommand, // ✅ 添加自定义上传按钮
+          uploadCommand,
         ]}
       />
     </div>

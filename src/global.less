@@ -76,6 +76,27 @@ ol {
   list-style: none;
 }
 
+/* 修复 Markdown 编辑器/预览中列表标记被上方全局 list-style:none 清除的问题
+   （@uiw/react-markdown-preview 只恢复了 ol 的序号，从未恢复 ul 的圆点） */
+.wmde-markdown ul:not(.no-list) {
+  list-style-type: disc;
+}
+.wmde-markdown ul ul:not(.no-list) {
+  list-style-type: circle;
+}
+.wmde-markdown ul ul ul:not(.no-list) {
+  list-style-type: square;
+}
+.wmde-markdown ol:not(.no-list) {
+  list-style-type: decimal;
+}
+.wmde-markdown ol ol:not(.no-list) {
+  list-style-type: lower-roman;
+}
+.wmde-markdown ol ol ol:not(.no-list) {
+  list-style-type: lower-alpha;
+}
+
 @media (max-width: 768px) {
   .ant-table {
     width: 100%;

@@ -1,82 +1,106 @@
-import { PageContainer } from '@ant-design/pro-components';
-import MDEditor from '@uiw/react-md-editor';
-import { Button, Input, message, Space } from 'antd';
-import React, { useId, useState } from 'react';
+import { MarkdownEditor } from '@/components';
 import { addDynamic } from '@/services/nextjs/index';
+import { PageContainer } from '@ant-design/pro-components';
+import { App, Button, Card, Col, Flex, Input, Row, Typography } from 'antd';
+import { useId, useState } from 'react';
+
+const baseUrl = process.env.BASE_API_URL || 'http://localhost:3000/';
 
 const NewDynamic: React.FC = () => {
+  const { message } = App.useApp();
   const titleId = useId();
   const excerptId = useId();
   const contentId = useId();
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
-  const [content, setContent] = useState<string | undefined>(
-    '## 在这里输入内容',
+  const [content, setContent] = useState(
+    '## 在这里输入内容\n\n- 支持列表\n- 支持引用\n- 支持代码块',
   );
-  const onSubmit = () => {
+
+  const onSubmit = async () => {
     if (!content) {
       message.error('请输入内容');
       return;
     }
+
     try {
-      addDynamic({
+      const res: any = await addDynamic({
         title,
         excerpt,
         content,
-      }).then((res: any) => {
-        if (res.ok) {
-          message.success('发布成功');
-          setTitle('');
-          setExcerpt('');
-          setContent('');
-        } else {
-          message.error('发布失败');
-        }
       });
+
+      if (res.ok) {
+        message.success('发布成功');
+        setTitle('');
+        setExcerpt('');
+        setContent('## 在这里输入内容\n\n- 支持列表\n- 支持引用\n- 支持代码块');
+      } else {
+        message.error('发布失败');
+      }
     } catch (_error) {
       message.error('发布失败');
     }
   };
+
   return (
     <PageContainer
+      title="新增动态"
+      subTitle="适合快速发布短内容、状态和想法"
       extra={
         <Button type="primary" onClick={onSubmit}>
-          发布
+          发布动态
         </Button>
       }
     >
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <Space>
-          <label htmlFor={titleId}>标题:</label>
-          <Input
-            id={titleId}
-            placeholder="请输入标题"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </Space>
-        <Space>
-          <label htmlFor={excerptId}>摘要:</label>
-          <Input.TextArea
-            id={excerptId}
-            cols={100}
-            placeholder="请输入摘要"
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
-          />
-        </Space>
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <label htmlFor={contentId}>内容:</label>
-          <MDEditor
-            style={{ width: '100%' }}
-            height={500}
-            id={contentId}
-            value={content}
-            onChange={(value) => setContent(value)}
-          />
-        </Space>
-      </Space>
+      <Row justify="center">
+        <Col xs={24} lg={16}>
+          <Card styles={{ body: { paddingTop: 20 } }}>
+            <Flex vertical gap={24}>
+              <Flex vertical gap={8}>
+                <Typography.Text strong>标题</Typography.Text>
+                <Input
+                  id={titleId}
+                  placeholder="请输入标题（可选）"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  size="large"
+                  allowClear
+                />
+              </Flex>
+
+              <Flex vertical gap={8}>
+                <Typography.Text strong>摘要</Typography.Text>
+                <Input.TextArea
+                  id={excerptId}
+                  placeholder="一句话摘要（可选）"
+                  value={excerpt}
+                  onChange={(e) => setExcerpt(e.target.value)}
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                />
+              </Flex>
+
+              <Flex vertical gap={8}>
+                <Flex align="center" justify="space-between">
+                  <Typography.Text strong>内容</Typography.Text>
+                  <Typography.Text type="secondary">
+                    支持列表、引用、代码块等 Markdown 语法
+                  </Typography.Text>
+                </Flex>
+                <MarkdownEditor
+                  id={contentId}
+                  height={480}
+                  value={content}
+                  onChange={setContent}
+                  baseUrl={baseUrl}
+                />
+              </Flex>
+            </Flex>
+          </Card>
+        </Col>
+      </Row>
     </PageContainer>
   );
 };
+
 export default NewDynamic;
