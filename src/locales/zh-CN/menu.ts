@@ -56,4 +56,5 @@ export default {
   'menu.manage': '管理',
   'menu.manage.post': '文章管理',
   'menu.manage.dynamic': '动态管理',
+  'menu.analysis': '数据分析',
 };

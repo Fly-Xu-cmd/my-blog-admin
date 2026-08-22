@@ -1,3 +1,4 @@
+import { getAnalyticsStats } from "./analytics";
 import {
   addCategory,
   addTag,
@@ -26,6 +27,7 @@ export {
   deleteDynamic,
   deletePost,
   deleteTag,
+  getAnalyticsStats,
   getCategories,
   getDynamics,
   getPosts,
@@ -38,3 +40,5 @@ export {
   updateTag,
   checkToken,
 };
+
+export type { AnalyticsStats } from "./analytics";
