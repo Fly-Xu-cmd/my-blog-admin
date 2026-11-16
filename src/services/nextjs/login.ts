@@ -1,32 +1,19 @@
-import { request } from "@umijs/max";
-
-export async function login(options?: { [key: string]: any }) {
-  return request<API.LoginResponse>("/api/login", {
-    method: "POST",
-    data: {
-      method: "post",
-      ...(options || {}),
-    },
-  });
+import { request } from '@umijs/max';
+import { authFailure } from '@/utils/api';
+export function login(options?: Record<string, unknown>) {
+  return request<API.LoginResponse>('/api/login', { method: 'POST', data: options });
 }
-
-export async function loginOut() {
-  return request<API.LoginResponse>("/api/loginout", {
-    method: "POST",
-    data: {
-      method: "post",
-    },
-  });
+export function loginOut() {
+  localStorage.removeItem('accessToken');
+  return Promise.resolve({ ok: true });
 }
-// 检验token
-export async function checkToken(token: string) {
-  if (!token) {
-    return Promise.reject("token is required");
-  }
-  return request<API.LoginResponse>("/api/login/" + token, {
-    method: "POST",
-    data: {
-      method: "post",
-    },
+export function checkToken(token: string) {
+  return request<API.LoginResponse>('/api/auth/me', {
+    method: 'GET',
+    headers: { Authorization: 'Bearer ' + token },
+    skipErrorHandler: true,
+  }).catch((error) => {
+    authFailure(error.response?.status);
+    return { ok: false };
   });
 }

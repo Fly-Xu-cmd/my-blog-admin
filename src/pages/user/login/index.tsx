@@ -1,6 +1,6 @@
 import type { FormProps } from 'antd';
 import { Button, Checkbox, Form, Input, message } from 'antd';
-import { useModel, useNavigate } from 'umi';
+import { useModel, useNavigate } from '@umijs/max';
 import { login } from '@/services/nextjs/login';
 import './style.less';
 
@@ -26,7 +26,6 @@ export default function LoginForm() {
       remember: values.remember,
     })
       .then((res) => {
-        console.log('登录接口返回:', res);
         if (res.ok) {
           messageApi.success('登录成功');
           localStorage.setItem('accessToken', res.data?.token || '');
@@ -47,11 +46,7 @@ export default function LoginForm() {
       });
   };
 
-  const onFinishFailed: FormProps<FieldType>['onFinishFailed'] = (
-    errorInfo,
-  ) => {
-    console.log('Failed:', errorInfo);
-  };
+  const onFinishFailed: FormProps<FieldType>['onFinishFailed'] = (errorInfo) => {};
   return (
     <>
       {contextHolder}
@@ -85,20 +80,12 @@ export default function LoginForm() {
                 <Input.Password />
               </Form.Item>
 
-              <Form.Item<FieldType>
-                name="remember"
-                valuePropName="checked"
-                label={null}
-              >
+              <Form.Item<FieldType> name="remember" valuePropName="checked" label={null}>
                 <Checkbox>记住密码</Checkbox>
               </Form.Item>
 
               <Form.Item label={null}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  style={{ width: '100%' }}
-                >
+                <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
                   登入
                 </Button>
               </Form.Item>

@@ -6,17 +6,27 @@ on:
   workflow_dispatch:
 
 jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
   build-and-deploy:
+    needs: checks
+    environment: production
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
+      - name: Verify API compatibility readiness
+        env:
+          API_READY: ${{ vars.BLOG_API_COMPAT_READY }}
+        run: test "$API_READY" = "true"
+
       - name: 检出代码
         uses: actions/checkout@v3
 
       - name: 设置 Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
 
       - name: 安装依赖
         run: npm ci --registry=https://registry.npmmirror.com

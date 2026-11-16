@@ -7,12 +7,8 @@ import proxy from './proxy';
 
 import routes from './routes';
 
-const {
-  REACT_APP_ENV = 'dev',
-  ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION = 'site',
-  ADMIN_USERNAME = 'Fly',
-  ADMIN_PASSWORD = '110300',
-} = process.env;
+const { REACT_APP_ENV = 'dev', ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION = 'site' } =
+  process.env;
 
 /**
  * @name 使用公共路径
@@ -166,8 +162,7 @@ export default defineConfig({
     },
     {
       requestLibPath: "import { request } from '@umijs/max'",
-      schemaPath:
-        'https://gw.alipayobjects.com/os/antfincdn/CA1dOm%2631B/openapi.json',
+      schemaPath: 'https://gw.alipayobjects.com/os/antfincdn/CA1dOm%2631B/openapi.json',
       projectName: 'swagger',
     },
   ],
@@ -189,12 +184,10 @@ export default defineConfig({
    * @doc https://umijs.org/docs/api/config#define
    */
   define: {
+    'process.env.BASE_API_URL': process.env.BLOG_API_BASE_URL || 'http://localhost:3000',
     'process.env': {
       REACT_APP_ENV,
       ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION,
-      ADMIN_USERNAME,
-      ADMIN_PASSWORD,
-      BASE_API_URL: 'http://localhost:3000',
     },
   },
 });

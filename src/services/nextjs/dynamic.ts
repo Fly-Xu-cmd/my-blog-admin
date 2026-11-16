@@ -1,11 +1,11 @@
-import { request } from "@umijs/max";
+import { request } from '@umijs/max';
 
 // 新增动态 POST /api/dynamics
 export async function addDynamic(options?: { [key: string]: any }) {
-  return request<API.DynamicList>("/api/dynamics", {
-    method: "POST",
+  return request<API.DynamicList>('/api/dynamics', {
+    method: 'POST',
     data: {
-      method: "post",
+      method: 'post',
       ...(options || {}),
     },
   });
@@ -17,12 +17,13 @@ export async function getDynamics(
     current?: number;
     pageSize?: number;
   },
-  options?: { [key: string]: any }
+  options?: { [key: string]: any },
 ) {
-  return request<API.DynamicList>("/api/dynamics", {
-    method: "GET",
+  return request<API.DynamicList>('/api/dynamics', {
+    method: 'GET',
     params: {
       ...params,
+      scope: 'admin',
       current: params?.current || 1,
       // 后端使用 size 而非 pageSize 分页
       size: params?.pageSize || 10,
@@ -32,14 +33,11 @@ export async function getDynamics(
 }
 
 // 更新动态 PUT /api/dynamics/:id
-export async function updateDynamic(
-  id: number,
-  options?: { [key: string]: any }
-) {
+export async function updateDynamic(id: number, options?: { [key: string]: any }) {
   return request<API.DynamicList>(`/api/dynamics/${id}`, {
-    method: "PUT",
+    method: 'PUT',
     data: {
-      method: "put",
+      method: 'put',
       ...(options || {}),
     },
   });
@@ -48,9 +46,9 @@ export async function updateDynamic(
 // 删除动态 DELETE /api/dynamics/:id
 export async function deleteDynamic(id: number) {
   return request<API.DynamicList>(`/api/dynamics/${id}`, {
-    method: "DELETE",
+    method: 'DELETE',
     data: {
-      method: "delete",
+      method: 'delete',
     },
   });
 }

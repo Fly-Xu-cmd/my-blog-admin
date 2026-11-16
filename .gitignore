@@ -43,3 +43,7 @@ build
 
 # Claude Code
 .claude/
+
+.env
+.env.*
+

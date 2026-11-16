@@ -17,7 +17,7 @@ const NewDynamic: React.FC = () => {
     '## 在这里输入内容\n\n- 支持列表\n- 支持引用\n- 支持代码块',
   );
 
-  const onSubmit = async () => {
+  const onSubmit = async (published = true) => {
     if (!content) {
       message.error('请输入内容');
       return;
@@ -26,6 +26,7 @@ const NewDynamic: React.FC = () => {
     try {
       const res: any = await addDynamic({
         title,
+        published,
         excerpt,
         content,
       });
@@ -48,9 +49,12 @@ const NewDynamic: React.FC = () => {
       title="新增动态"
       subTitle="适合快速发布短内容、状态和想法"
       extra={
-        <Button type="primary" onClick={onSubmit}>
-          发布动态
-        </Button>
+        <>
+          <Button onClick={() => onSubmit(false)}>保存草稿</Button>
+          <Button type="primary" onClick={() => onSubmit(true)}>
+            发布动态
+          </Button>
+        </>
       }
     >
       <Row justify="center">

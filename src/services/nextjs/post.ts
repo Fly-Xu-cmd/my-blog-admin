@@ -1,59 +1,29 @@
-import { request } from "@umijs/max";
-
-// 新增文章 POST /api/posts
-export async function addPost(options?: { [key: string]: any }) {
-  return request<API.PostList>("/api/posts", {
-    method: "POST",
-    data: {
-      method: "post",
-      ...(options || {}),
-    },
+import { request } from '@umijs/max';
+export function addPost(payload?: Record<string, unknown>, key?: string) {
+  return request<API.PostList>('/api/posts', {
+    method: 'POST',
+    data: payload,
+    headers: { 'Idempotency-Key': key || crypto.randomUUID() },
   });
 }
-
-// 获取文章列表 GET /api/posts
-export async function getPosts(
-  params?: {
-    // query
-    /** 当前的页码 */
-    current?: number;
-    /** 页面的容量 */
-    pageSize?: number;
-  },
-  options?: { [key: string]: any }
-) {
-  return request<API.PostList>("/api/posts", {
-    method: "GET",
+export function getPosts(params?: Record<string, any>, options?: Record<string, any>) {
+  return request<API.PostList>('/api/posts', {
+    method: 'GET',
     params: {
       ...params,
+      scope: 'admin',
       current: params?.current || 1,
       pageSize: params?.pageSize || 10,
     },
-    ...(options || {}),
+    ...options,
   });
 }
-
-// 更新文章 POST /api/posts/:slug
-export async function updatePost(
-  slug: string,
-  options?: { [key: string]: any }
-) {
-  return request<API.PostList>(`/api/posts/${slug}`, {
-    method: "PUT",
-    data: {
-      method: "put",
-      ...(options || {}),
-    },
+export function updatePost(slug: string, payload?: Record<string, unknown>) {
+  return request<API.PostList>('/api/posts/' + encodeURIComponent(slug), {
+    method: 'PUT',
+    data: payload,
   });
 }
-
-// 删除文章 DELETE /api/posts/:slug
-export async function deletePost(slug: string) {
-  console.log("slug", slug);
-  return request<API.PostList>(`/api/posts/${slug}`, {
-    method: "DELETE",
-    data: {
-      method: "delete",
-    },
-  });
+export function deletePost(slug: string) {
+  return request('/api/posts/' + encodeURIComponent(slug), { method: 'DELETE' });
 }

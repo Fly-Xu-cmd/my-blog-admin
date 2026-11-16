@@ -1,25 +1,22 @@
-import { request } from "@umijs/max";
+import { request } from '@umijs/max';
 
 // 新增分类 POST /api/categories
 export async function addCategory(options?: { name: string }) {
-  return request<API.Category>("/api/categories", {
-    method: "POST",
+  return request<API.Category>('/api/categories', {
+    method: 'POST',
     data: {
-      method: "post",
+      method: 'post',
       ...(options || {}),
     },
   });
 }
 
 // 更新分类 PUT /api/categories
-export async function updateCategory(options?: {
-  name: string;
-  newName: string;
-}) {
+export async function updateCategory(options?: { name: string; newName: string }) {
   return request<API.Category>(`/api/categories`, {
-    method: "PUT",
+    method: 'PUT',
     data: {
-      method: "put",
+      method: 'put',
       ...(options || {}),
     },
   });
@@ -28,9 +25,9 @@ export async function updateCategory(options?: {
 // 删除分类 DELETE /api/categories
 export async function deleteCategory(options?: { name: string }) {
   return request<API.Category>(`/api/categories`, {
-    method: "DELETE",
+    method: 'DELETE',
     data: {
-      method: "delete",
+      method: 'delete',
       ...(options || {}),
     },
   });
@@ -39,9 +36,10 @@ export async function deleteCategory(options?: { name: string }) {
 // 获取分类 GET /api/categories
 export async function getCategories(options?: { [key: string]: any }) {
   return request<API.CategoryList>(`/api/categories`, {
-    method: "GET",
+    method: 'GET',
+    params: { scope: 'admin' },
     data: {
-      method: "get",
+      method: 'get',
       ...(options || {}),
     },
   });
@@ -50,9 +48,10 @@ export async function getCategories(options?: { [key: string]: any }) {
 // 获取标签 GET /api/tags
 export async function getTags(options?: { [key: string]: any }) {
   return request<API.TagList>(`/api/tags`, {
-    method: "GET",
+    method: 'GET',
+    params: { scope: 'admin' },
     data: {
-      method: "get",
+      method: 'get',
       ...(options || {}),
     },
   });
@@ -60,10 +59,10 @@ export async function getTags(options?: { [key: string]: any }) {
 
 // 新增标签 POST /api/tags
 export async function addTag(options?: { name: string }) {
-  return request<API.Tag>("/api/tags", {
-    method: "POST",
+  return request<API.Tag>('/api/tags', {
+    method: 'POST',
     data: {
-      method: "post",
+      method: 'post',
       ...(options || {}),
     },
   });
@@ -72,9 +71,9 @@ export async function addTag(options?: { name: string }) {
 // 删除标签 DELETE /api/tags
 export async function deleteTag(options?: { name: string }) {
   return request<API.Tag>(`/api/tags`, {
-    method: "DELETE",
+    method: 'DELETE',
     data: {
-      method: "delete",
+      method: 'delete',
       ...(options || {}),
     },
   });
@@ -83,9 +82,9 @@ export async function deleteTag(options?: { name: string }) {
 // 更新标签 PUT /api/tags
 export async function updateTag(options?: { name: string; newName: string }) {
   return request<API.Tag>(`/api/tags`, {
-    method: "PUT",
+    method: 'PUT',
     data: {
-      method: "put",
+      method: 'put',
       ...(options || {}),
     },
   });

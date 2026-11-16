@@ -78,6 +78,11 @@ export default [
         component: './post-manage',
       },
       {
+        name: 'note',
+        path: '/manage/note',
+        component: './note-manage',
+      },
+      {
         name: 'dynamic',
         path: '/manage/dynamic',
         component: './dynamic-manage',
