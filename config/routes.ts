@@ -83,6 +83,11 @@ export default [
         component: './note-manage',
       },
       {
+        name: 'series',
+        path: '/manage/series',
+        component: './series-manage',
+      },
+      {
         name: 'dynamic',
         path: '/manage/dynamic',
         component: './dynamic-manage',
