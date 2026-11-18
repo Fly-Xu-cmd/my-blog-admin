@@ -12,9 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run test:unit
-      - run: npm run tsc
-      - run: npm run build:prod
+      - run: npm install -g pnpm@12.3.4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:unit
+      - run: pnpm run tsc
+      - run: pnpm run build:prod
 
