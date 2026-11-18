@@ -2,6 +2,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
   moduleNameMapper: {
+    '\\.(css|less)$': '<rootDir>/tests/unit/style.cjs',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@umijs/max$': '<rootDir>/tests/unit/umi.cjs',
   },
