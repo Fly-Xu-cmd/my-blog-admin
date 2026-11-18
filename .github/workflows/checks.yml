@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: bash -n scripts/check-deploy-readiness.sh tests/check-deploy-readiness.test.sh
+      - run: bash tests/check-deploy-readiness.test.sh
       - uses: actions/setup-node@v4
         with:
           node-version: 24

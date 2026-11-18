@@ -12,16 +12,19 @@ jobs:
     needs: checks
     environment: production
     if: github.ref == 'refs/heads/main'
+    concurrency:
+      group: blog-admin-production-release
+      cancel-in-progress: false
     runs-on: ubuntu-latest
 
     steps:
-      - name: Verify API compatibility readiness
-        env:
-          API_READY: ${{ vars.BLOG_API_COMPAT_READY }}
-        run: test "$API_READY" = "true"
-
       - name: 检出代码
         uses: actions/checkout@v4
+
+      - name: Verify API compatibility readiness
+        env:
+          BLOG_API_COMPAT_READY: ${{ vars.BLOG_API_COMPAT_READY }}
+        run: bash scripts/check-deploy-readiness.sh admin
 
       - name: 设置 Node.js
         uses: actions/setup-node@v4
