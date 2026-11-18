@@ -1,3 +1,4 @@
+import { creationKey, uploadImage } from '@/utils/api';
 import { MarkdownEditor, SummaryInput, TitleInput } from '@/components';
 import { addPost, getCategories, getTags } from '@/services/nextjs/index';
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
@@ -8,6 +9,7 @@ import {
   Card,
   Col,
   Flex,
+  Input,
   Row,
   Select,
   Space,
@@ -16,13 +18,12 @@ import {
   Typography,
   Upload,
 } from 'antd';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState, useRef } from 'react';
 
 const baseUrl = process.env.BASE_API_URL || 'http://localhost:3000/';
 
 // 七牛云返回的是完整 URL；只有相对路径才需要拼接 baseUrl
-const resolveImageUrl = (url?: string) =>
-  url && !/^https?:\/\//.test(url) ? baseUrl + url : url;
+const resolveImageUrl = (url?: string) => (url && !/^https?:\/\//.test(url) ? baseUrl + url : url);
 
 const NewPost: React.FC = () => {
   const { message } = App.useApp();
@@ -33,6 +34,10 @@ const NewPost: React.FC = () => {
   const tagsId = useId();
   const contentId = useId();
 
+  const requestKey = useRef<{ key?: string; hash?: string }>({});
+  const submittingRef = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [slug, setSlug] = useState('');
   const [title, setTitle] = useState<string>();
   const [excerpt, setExcerpt] = useState<string>();
   const [content, setContent] = useState<string>(
@@ -42,13 +47,9 @@ const NewPost: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState<any[]>([]);
   const [categoryValue, setCategoryValue] = useState<number | undefined>();
-  const [categoryOptions, setCategoryOptions] = useState<
-    { label: string; value: number }[]
-  >([]);
+  const [categoryOptions, setCategoryOptions] = useState<{ label: string; value: number }[]>([]);
   const [tags, setTags] = useState<string[] | undefined>([]);
-  const [tagOptions, setTagOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [tagOptions, setTagOptions] = useState<{ label: string; value: string }[]>([]);
   const [autoGenerateTitle, setAutoGenerateTitle] = useState(false);
   const [autoGenerateSummary, setAutoGenerateSummary] = useState(false);
 
@@ -93,13 +94,15 @@ const NewPost: React.FC = () => {
   }, []);
 
   const submitPost = async (nextPublished: boolean) => {
+    if (submittingRef.current) return;
     if ((!title && !autoGenerateTitle) || !content) {
       message.error('缺少标题和内容');
       return;
     }
-
+    submittingRef.current = true;
+    setSubmitting(true);
     try {
-      const res: any = await addPost({
+      const payload = {
         title,
         excerpt,
         content,
@@ -109,24 +112,23 @@ const NewPost: React.FC = () => {
         tags,
         autoGenerateTitle,
         autoGenerateSummary,
-      });
-
-      if (res.ok) {
-        message.success(nextPublished ? '发布成功' : '已保存为私密');
-        setTitle('');
-        setExcerpt('');
-        setContent('## 在此处输入内容\n\n- 支持列表\n- 支持引用\n- 支持代码块');
-        setImageUrl('');
-        setFileList([]);
-        setCategoryValue(undefined);
-        setTags([]);
-        setAutoGenerateTitle(false);
-        setAutoGenerateSummary(false);
-      } else {
-        message.error('发布失败');
-      }
-    } catch (_error) {
-      message.error('发布失败');
+        ...(slug ? { slug } : {}),
+      };
+      const result = await addPost(payload, creationKey(requestKey.current, payload));
+      if (!result.ok) throw new Error(result.error || '保存失败');
+      requestKey.current = {};
+      setTitle('');
+      setExcerpt('');
+      setSlug('');
+      setContent('');
+      setImageUrl('');
+      setTags([]);
+      message.success(nextPublished ? '发布成功' : '草稿已保存');
+    } catch (e: any) {
+      message.error(e.response?.data?.error || e.message || '请求失败，可重试原请求');
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
     }
   };
 
@@ -167,8 +169,10 @@ const NewPost: React.FC = () => {
       subTitle="完善标题、摘要、分类、标签和正文内容后即可发布"
       extra={
         <Space>
-          <Button onClick={() => submitPost(false)}>保存草稿</Button>
-          <Button type="primary" onClick={() => submitPost(true)}>
+          <Button disabled={submitting} onClick={() => submitPost(false)}>
+            保存草稿
+          </Button>
+          <Button type="primary" loading={submitting} onClick={() => submitPost(true)}>
             发布博客
           </Button>
         </Space>
@@ -182,6 +186,12 @@ const NewPost: React.FC = () => {
             styles={{ body: { paddingTop: 16 } }}
           >
             <Flex vertical gap={24}>
+              <Input
+                placeholder="链接 slug（留空自动生成拼音）"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                maxLength={160}
+              />
               <Flex vertical gap={8}>
                 <Flex align="center" justify="space-between">
                   <Typography.Text strong>标题</Typography.Text>
@@ -252,7 +262,15 @@ const NewPost: React.FC = () => {
                     className="avatar-uploader"
                     showUploadList={false}
                     fileList={fileList}
-                    action="/api/upload-qiniu"
+                    customRequest={async (opts) => {
+                      try {
+                        const url = await uploadImage(opts.file as File);
+                        setImageUrl(url);
+                        opts.onSuccess?.({ url });
+                      } catch (e: any) {
+                        opts.onError?.(e);
+                      }
+                    }}
                     beforeUpload={beforeUpload}
                     onChange={handleChange}
                   >
@@ -291,7 +309,7 @@ const NewPost: React.FC = () => {
                   id={tagsId}
                   placeholder="请选择标签(多选)"
                   style={{ width: '100%', marginTop: 8 }}
-                  mode="multiple"
+                  mode="tags"
                   allowClear
                   value={tags}
                   options={

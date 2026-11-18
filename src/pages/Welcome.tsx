@@ -1,8 +1,8 @@
-import { Line, Pie } from '@ant-design/plots';
+import { Line, Pie } from '@ant-design/charts';
 import { PageContainer } from '@ant-design/pro-components';
 import { Card, Space } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { useModel } from 'umi';
+import { useModel } from '@umijs/max';
 import { getDynamics, getPosts } from '@/services/nextjs';
 
 const Welcome: React.FC = () => {

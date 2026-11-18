@@ -1,4 +1,4 @@
-import { Line } from '@ant-design/plots';
+import { Line } from '@ant-design/charts';
 import { PageContainer } from '@ant-design/pro-components';
 import {
   Button,
@@ -29,9 +29,7 @@ const topPageColumns: ColumnsType<{ path: string; count: number }> = [
     title: '路径',
     dataIndex: 'path',
     key: 'path',
-    render: (text: string) => (
-      <Typography.Text copyable={{ text }}>{text}</Typography.Text>
-    ),
+    render: (text: string) => <Typography.Text copyable={{ text }}>{text}</Typography.Text>,
   },
   {
     title: '访问量',
@@ -134,9 +132,7 @@ const Analysis: React.FC = () => {
       <PageContainer title="数据分析">
         <Card>
           <Result
-            status={
-              error === '403' ? '403' : error === '401' ? 'warning' : 'error'
-            }
+            status={error === '403' ? '403' : error === '401' ? 'warning' : 'error'}
             title={
               error === '401'
                 ? '未登录或登录已过期'
@@ -169,18 +165,12 @@ const Analysis: React.FC = () => {
         <Row gutter={[24, 24]} align="middle">
           <Col xs={24} sm={12} md={6}>
             <Card loading={loading}>
-              <Statistic
-                title="今日访问量（PV）"
-                value={stats?.today?.pv ?? 0}
-              />
+              <Statistic title="今日访问量（PV）" value={stats?.today?.pv ?? 0} />
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Card loading={loading}>
-              <Statistic
-                title="今日独立访客（UV）"
-                value={stats?.today?.uv ?? 0}
-              />
+              <Statistic title="今日独立访客（UV）" value={stats?.today?.uv ?? 0} />
             </Card>
           </Col>
           <Col xs={24} md={12} style={{ textAlign: 'right' }}>

@@ -1,4 +1,6 @@
+import { uploadImage as uploadAuthenticatedImage } from '@/utils/api';
 import { commands } from '@uiw/react-md-editor';
+import { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import MDEditor from '@uiw/react-md-editor';
 import { useId } from 'react';
@@ -10,25 +12,13 @@ export default function MarkdownEditor(props: {
   baseUrl?: string;
   id?: string;
 }) {
-  const {
-    value: initialValue,
-    onChange,
-    height = 420,
-    id,
-  } = props;
+  const { value: initialValue, onChange, height = 420, id } = props;
 
   const uploadImageTitleId = useId();
 
   const uploadImage = async (file: File) => {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/upload-qiniu', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
+      const data = { ok: true, url: await uploadAuthenticatedImage(file) };
 
       if (data.ok && data.url) return data.url;
       throw new Error('无效的上传响应');
@@ -84,12 +74,12 @@ export default function MarkdownEditor(props: {
         preview="live"
         previewOptions={{
           remarkPlugins: [remarkGfm],
+          skipHtml: false,
+          urlTransform: defaultUrlTransform,
+          // UIW reverses skipHtml and adds rehypeRaw internally. Remove the entire HTML plugin chain.
+          pluginsFilter: (type, plugins) => (type === 'rehype' ? [] : plugins),
         }}
-        commands={[
-          ...commands.getCommands(),
-          commands.divider,
-          uploadCommand,
-        ]}
+        commands={[...commands.getCommands(), commands.divider, uploadCommand]}
       />
     </div>
   );

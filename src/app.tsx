@@ -1,13 +1,7 @@
 import { LinkOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
-import {
-  AvatarDropdown,
-  AvatarName,
-  Footer,
-  Question,
-  SelectLang,
-} from '@/components';
+import { AvatarDropdown, AvatarName, Footer, Question, SelectLang } from '@/components';
 import { checkToken } from '@/services/nextjs/login';
 import '@ant-design/v5-patch-for-react-19';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
@@ -45,11 +39,7 @@ export async function getInitialState(): Promise<{
   };
   // 如果不是登录页面，执行
   const { location } = history;
-  if (
-    ![loginPath, '/user/register', '/user/register-result'].includes(
-      location.pathname,
-    )
-  ) {
+  if (![loginPath, '/user/register', '/user/register-result'].includes(location.pathname)) {
     const isTokenValid = await checkedToken();
     if (!isTokenValid) {
       return {
@@ -69,15 +59,9 @@ export async function getInitialState(): Promise<{
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({
-  initialState,
-  setInitialState,
-}) => {
+export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    actionsRender: () => [
-      <Question key="doc" />,
-      <SelectLang key="SelectLang" />,
-    ],
+    actionsRender: () => [<Question key="doc" />, <SelectLang key="SelectLang" />],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
       title: <AvatarName />,
@@ -91,12 +75,9 @@ export const layout: RunTimeLayoutConfig = ({
     // },
     footerRender: () => <Footer />,
     onPageChange: async () => {
-      console.log('onPageChange', history.location.pathname);
       const { location } = history;
       const accessToken = localStorage.getItem('accessToken');
-      const isTokenValid = accessToken
-        ? (await checkToken(accessToken)).ok
-        : false;
+      const isTokenValid = accessToken ? (await checkToken(accessToken)).ok : false;
       // 如果没有登录，重定向到 login
       if (!isTokenValid && location.pathname !== loginPath) {
         history.push(loginPath);

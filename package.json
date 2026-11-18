@@ -30,7 +30,8 @@
     "test": "jest",
     "test:coverage": "npm run jest -- --coverage",
     "test:update": "npm run jest -- -u",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "test:unit": "jest --config jest.unit.config.cjs --runInBand"
   },
   "browserslist": [
     "defaults"
@@ -72,7 +73,7 @@
     "gh-pages": "^6.1.1",
     "husky": "^9.1.7",
     "jest": "^30.0.4",
-    "jest-environment-jsdom": "^29.7.0",
+    "jest-environment-jsdom": "^30.0.4",
     "lint-staged": "^16.1.2",
     "mockjs": "^1.1.0",
     "ts-node": "^10.9.2",
