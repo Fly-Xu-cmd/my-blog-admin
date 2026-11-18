@@ -1,164 +1,291 @@
-import { useRef, useState } from 'react';
-import { PageContainer, ProTable, ActionType } from '@ant-design/pro-components';
-import { App, Button, Form, Input, Modal } from 'antd';
+import { BookOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PageContainer } from '@ant-design/pro-components';
+import { history } from '@umijs/max';
+import {
+  Alert,
+  App,
+  Button,
+  Empty,
+  Input,
+  Space,
+  Spin,
+  Typography,
+  theme,
+} from 'antd';
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { api } from '@/utils/api';
+import SeriesEditor, { type Series } from './SeriesEditor';
+import styles from './style.less';
+
 export default function SeriesManager() {
   const { message, modal } = App.useApp();
-  const [form] = Form.useForm();
-  const action = useRef<ActionType>(null);
-  const [open, setOpen] = useState(false);
-  const [edit, setEdit] = useState<any>(null);
-  const [busy, setBusy] = useState(false);
-  const save = async () => {
-    try {
-      const data = await form.validateFields();
-      setBusy(true);
-      await api('/api/series', {
-        method: edit ? 'PUT' : 'POST',
-        body: JSON.stringify(
-          edit ? { id: edit.id, name: data.name, description: data.description } : data,
-        ),
+  const { token } = theme.useToken();
+  const [series, setSeries] = useState<Series[]>([]);
+  const [selected, setSelected] = useState<number | 'new' | null>(null);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0);
+  const [blocking, setBlocking] = useState(false);
+  const dirty = useRef(false);
+  const busy = useRef(false);
+  const confirming = useRef(false);
+  const reportDirty = useCallback((value: boolean) => {
+    dirty.current = value;
+    setBlocking(value || busy.current);
+  }, []);
+  const reportBusy = useCallback((value: boolean) => {
+    busy.current = value;
+    setBlocking(value || dirty.current);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError('');
+    api<{ data: Series[] }>('/api/series?scope=admin', {
+      signal: controller.signal,
+    })
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        setSeries(result.data);
+        setSelected((previous) =>
+          previous === 'new' || result.data.some((item) => item.id === previous)
+            ? previous
+            : (result.data[0]?.id ?? null),
+        );
+      })
+      .catch((e: Error) => {
+        if (!controller.signal.aborted) setError(e.message || '系列加载失败');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
       });
-      setOpen(false);
-      action.current?.reload();
-      message.success('保存成功');
-    } catch (e: any) {
-      if (e.message) message.error(e.message);
-    } finally {
-      setBusy(false);
-    }
+    return () => controller.abort();
+  }, [revision]);
+
+  const guard = useCallback(
+    (action: () => void) => {
+      if (busy.current) {
+        message.info('正在保存，请稍候');
+        return;
+      }
+      if (!dirty.current) {
+        action();
+        return;
+      }
+      if (confirming.current) return;
+      confirming.current = true;
+      modal.confirm({
+        title: '有尚未保存的修改',
+        content: '离开后，本次系列信息或文章顺序修改将丢失。',
+        okText: '放弃修改并离开',
+        cancelText: '继续编辑',
+        onOk: () => {
+          dirty.current = false;
+          action();
+        },
+        afterClose: () => {
+          confirming.current = false;
+        },
+      });
+    },
+    [message, modal],
+  );
+
+  useEffect(() => {
+    // history.block also installs beforeunload: register only while needed.
+    if (!blocking) return;
+    let unblock = () => {};
+    let unlisten = () => {};
+    let active = true;
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (dirty.current || busy.current) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    const blocker: Parameters<typeof history.block>[0] = (transition) => {
+      const proceed = () => {
+        unblock();
+        unlisten();
+        // POP retries are asynchronous. Restore protection after applyTx,
+        // rather than intercepting the still-pending history.go again.
+        unlisten = history.listen(() => {
+          unlisten();
+          unlisten = () => {};
+          if (active && (dirty.current || busy.current))
+            unblock = history.block(blocker);
+        });
+        transition.retry();
+      };
+      if (
+        transition.location.pathname === '/user/login' ||
+        transition.location.pathname === history.location.pathname
+      ) {
+        proceed();
+        return;
+      }
+      guard(proceed);
+    };
+    unblock = history.block(blocker);
+    return () => {
+      active = false;
+      unblock();
+      unlisten();
+      window.removeEventListener('beforeunload', beforeUnload);
+    };
+  }, [guard, blocking]);
+
+  const refresh = () =>
+    guard(() => {
+      dirty.current = false;
+      setRevision((value) => value + 1);
+    });
+  const choose = (id: number | 'new') => {
+    if (id === selected) return;
+    guard(() => {
+      dirty.current = false;
+      setSelected(id);
+    });
   };
+  const active = series.find((item) => item.id === selected);
+  const visible = series.filter((item) =>
+    `${item.name} ${item.slug}`
+      .toLowerCase()
+      .includes(query.trim().toLowerCase()),
+  );
+  const update = (item: Series) => {
+    setSeries((previous) =>
+      [...previous.filter((entry) => entry.id !== item.id), item].sort((a, b) =>
+        a.name.localeCompare(b.name, 'zh-CN'),
+      ),
+    );
+    setSelected(item.id);
+    if (selected === 'new') setQuery('');
+  };
+  const remove = (id: number) => {
+    const rest = series.filter((item) => item.id !== id);
+    setSeries(rest);
+    dirty.current = false;
+    setSelected(rest[0]?.id ?? null);
+  };
+
   return (
-    <PageContainer title="系列管理">
-      <ProTable
-        actionRef={action}
-        rowKey="id"
-        search={false}
-        pagination={false}
-        toolBarRender={() => [
-          <Button
-            key="new"
-            onClick={() => {
-              setEdit(null);
-              form.resetFields();
-              setOpen(true);
-            }}
-          >
-            新增系列
-          </Button>,
-        ]}
-        columns={[
-          { title: '系列', dataIndex: 'name' },
-          { title: '链接', dataIndex: 'slug' },
-          { title: '说明', dataIndex: 'description' },
+    <PageContainer title="系列管理" content="把文章编成一条连贯的阅读路径。">
+      <div
+        className={styles.workspace}
+        style={
           {
-            title: '操作',
-            valueType: 'option',
-            render: (_, r) => [
-              <a
-                key="edit"
-                onClick={() => {
-                  setEdit(r);
-                  form.setFieldsValue(r);
-                  setOpen(true);
-                }}
-              >
-                编辑
-              </a>,
-              <a
-                key="order"
-                onClick={async () => {
-                  const all: any[] = [];
-                  for (let current = 1; ; current++) {
-                    const result = await api(
-                      '/api/posts?scope=admin&pageSize=50&current=' + current,
-                    );
-                    all.push(...result.data.filter((p: any) => p.seriesId === r.id));
-                    if (current >= result.pages) break;
-                  }
-                  all.sort((a, b) => a.seriesOrder - b.seriesOrder);
-                  let ordered = all.map((p) => p.id).join(',');
-                  modal.confirm({
-                    title: '调整系列顺序',
-                    content: (
-                      <>
-                        <p>{all.map((p) => p.id + ': ' + p.title).join('；')}</p>
-                        <Input
-                          defaultValue={ordered}
-                          onChange={(e) => {
-                            ordered = e.target.value;
-                          }}
-                          placeholder="按顺序输入文章 ID，用逗号分隔"
-                        />
-                      </>
-                    ),
-                    onOk: async () => {
-                      await api('/api/series/' + r.id + '/reorder', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                          postIds: ordered.trim()
-                            ? ordered.split(',').map((v) => Number(v.trim()))
-                            : [],
-                        }),
-                      });
-                      message.success('已重排');
-                    },
-                  });
-                }}
-              >
-                调整顺序
-              </a>,
-              <a
-                key="delete"
-                onClick={() =>
-                  modal.confirm({
-                    title: '删除系列？',
-                    content: '文章保留，并解除系列关联。',
-                    onOk: async () => {
-                      await api('/api/series', {
-                        method: 'DELETE',
-                        body: JSON.stringify({ id: r.id }),
-                      });
-                      action.current?.reload();
-                    },
-                  })
-                }
-              >
-                删除
-              </a>,
-            ],
-          },
-        ]}
-        request={async () => {
-          const r = await api('/api/series?scope=admin');
-          return { data: r.data, success: true };
-        }}
-      />
-      <Modal
-        title={edit ? '编辑系列' : '新增系列'}
-        open={open}
-        confirmLoading={busy}
-        onOk={save}
-        onCancel={() => setOpen(false)}
+            '--series-bg': token.colorBgContainer,
+            '--series-border': token.colorBorderSecondary,
+            '--series-muted': token.colorTextSecondary,
+            '--series-active': token.colorPrimaryBg,
+            '--series-primary': token.colorPrimary,
+            '--series-hover': token.colorFillTertiary,
+          } as CSSProperties
+        }
       >
-        <Form form={form} layout="vertical">
-          <Form.Item label="名称" name="name" rules={[{ required: true }]}>
-            <Input maxLength={100} />
-          </Form.Item>
-          {!edit && (
-            <Form.Item
-              label="链接 slug"
-              name="slug"
-              rules={[{ required: true }, { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/ }]}
-            >
-              <Input maxLength={160} />
-            </Form.Item>
+        <aside className={styles.sidebar} aria-label="系列列表">
+          <div className={styles.sidebarHead}>
+            <Typography.Text strong>
+              全部系列{' '}
+              <Typography.Text type="secondary">
+                {series.length}
+              </Typography.Text>
+            </Typography.Text>
+            <Space size={4}>
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                aria-label="刷新系列列表"
+                disabled={loading}
+                onClick={refresh}
+              />
+            </Space>
+          </div>
+          <Input.Search
+            placeholder="搜索系列名称或链接"
+            allowClear
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <div className={styles.seriesList}>
+            {loading ? (
+              <div className={styles.loading}>
+                <Spin />
+              </div>
+            ) : error ? (
+              <Alert
+                type="error"
+                message="系列加载失败"
+                description={error}
+                action={
+                  <Button aria-label="重试系列列表" onClick={refresh}>
+                    重试
+                  </Button>
+                }
+              />
+            ) : visible.length ? (
+              visible.map((item) => (
+                <button
+                  type="button"
+                  className={`${styles.seriesButton} ${selected === item.id ? styles.selected : ''}`}
+                  key={item.id}
+                  aria-pressed={selected === item.id}
+                  onClick={() => choose(item.id)}
+                >
+                  <BookOutlined />
+                  <span>
+                    <strong>{item.name}</strong>
+                    <small>{item.slug}</small>
+                  </span>
+                </button>
+              ))
+            ) : (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={query ? '没有匹配的系列' : '还没有系列'}
+              />
+            )}
+          </div>
+          <Button
+            block
+            aria-label="新建系列"
+            icon={<PlusOutlined />}
+            onClick={() => choose('new')}
+          >
+            新建系列
+          </Button>
+        </aside>
+        <section className={styles.editor} aria-label="系列工作区">
+          {selected === 'new' || (active && !loading) ? (
+            <SeriesEditor
+              key={`${selected}:${revision}`}
+              series={active ?? null}
+              onSave={update}
+              onDelete={remove}
+              onDirty={reportDirty}
+              onBusy={reportBusy}
+            />
+          ) : (
+            <div className={styles.blank}>
+              <Empty
+                description={
+                  loading ? '正在载入系列' : '选择一个系列，开始编排文章'
+                }
+              />
+            </div>
           )}
-          <Form.Item label="说明" name="description">
-            <Input.TextArea />
-          </Form.Item>
-        </Form>
-      </Modal>
+        </section>
+      </div>
     </PageContainer>
   );
 }
