@@ -1,6 +1,7 @@
 import {
   act,
   cleanup,
+  configure,
   fireEvent,
   render,
   screen,
@@ -8,7 +9,7 @@ import {
   within,
 } from '@testing-library/react';
 import { history } from '@umijs/max';
-import { App } from 'antd';
+import { App, ConfigProvider } from 'antd';
 import { createBrowserHistory } from 'history';
 import React from 'react';
 import type { SeriesPost } from '../../src/pages/series-manage/SeriesEditor';
@@ -60,7 +61,13 @@ const posts: SeriesPost[] = [
   },
 ];
 const mount = (element: React.ReactNode) =>
-  render(React.createElement(App, null, element));
+  render(
+    React.createElement(
+      ConfigProvider,
+      { theme: { token: { motion: false } } },
+      React.createElement(App, null, element),
+    ),
+  );
 const editor = (overrides = {}) =>
   mount(
     React.createElement(SeriesEditor, {
@@ -85,6 +92,8 @@ const deferred = () => {
 };
 
 beforeAll(() => {
+  // These queries span two async React/AntD render passes on shared CI runners.
+  configure({ asyncUtilTimeout: 5000 });
   window.matchMedia = jest.fn().mockImplementation(() => ({
     matches: false,
     addListener: jest.fn(),
