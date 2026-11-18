@@ -252,6 +252,63 @@ test('validation errors do not send a create request', async () => {
   await screen.findByText('请输入系列名称');
   expect(request).not.toHaveBeenCalled();
 });
+
+test('new series can be created from a Chinese name with the path left empty', async () => {
+  const onSave = jest.fn();
+  const receipt = {
+    ...series,
+    name: '博客工程实践',
+    slug: 'bo-ke-gong-cheng-shi-jian',
+  };
+  request.mockResolvedValue({ data: receipt });
+  editor({ series: null, onSave });
+  fireEvent.change(screen.getByRole('textbox', { name: '系列名称' }), {
+    target: { value: '博客工程实践' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: '创建系列' }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledWith(receipt));
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(request.mock.calls[0][1].method).toBe('POST');
+  expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({
+    name: '博客工程实践',
+    description: '',
+  });
+});
+
+test('invalid manual paths prevent requests and a corrected path is sent unchanged', async () => {
+  request.mockResolvedValue({ data: series });
+  editor({ series: null });
+  fireEvent.change(screen.getByRole('textbox', { name: '系列名称' }), {
+    target: { value: '工程实践' },
+  });
+  const path = screen.getByRole('textbox', { name: '系列路径（可选）' });
+  fireEvent.change(path, { target: { value: '中文/路径' } });
+  fireEvent.click(screen.getByRole('button', { name: '创建系列' }));
+  await screen.findByText('例如 blog-engineering，不含空格或中文');
+  expect(request).not.toHaveBeenCalled();
+  fireEvent.change(path, { target: { value: 'engineering' } });
+  fireEvent.click(screen.getByRole('button', { name: '创建系列' }));
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  expect(JSON.parse(request.mock.calls[0][1].body).slug).toBe('engineering');
+});
+
+test('failed automatic creation preserves the name and allows retry with a manual path', async () => {
+  request
+    .mockRejectedValueOnce(new RequestError('服务暂不可用', 503))
+    .mockResolvedValue({ data: series });
+  editor({ series: null });
+  const name = screen.getByRole('textbox', { name: '系列名称' });
+  fireEvent.change(name, { target: { value: '工程实践' } });
+  fireEvent.click(screen.getByRole('button', { name: '创建系列' }));
+  await screen.findByText('服务暂不可用');
+  expect((name as HTMLInputElement).value).toBe('工程实践');
+  fireEvent.change(screen.getByRole('textbox', { name: '系列路径（可选）' }), {
+    target: { value: 'engineering' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: '创建系列' }));
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  expect(JSON.parse(request.mock.calls[1][1].body).slug).toBe('engineering');
+});
 test('retrying a failed series list does not discard a new series draft', async () => {
   request
     .mockRejectedValueOnce(new Error('offline'))

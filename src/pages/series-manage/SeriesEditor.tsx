@@ -158,7 +158,11 @@ export default function SeriesEditor({
                 name: values.name,
                 description: values.description,
               }
-            : values,
+            : {
+                name: values.name,
+                description: values.description,
+                ...(values.slug ? { slug: values.slug } : {}),
+              },
         ),
       });
       setBaseline(values);
@@ -271,18 +275,17 @@ export default function SeriesEditor({
       </Form.Item>
       {series ? (
         <Form.Item
-          label="系列链接"
+          label="系列路径"
           extra="创建后保持固定，修改名称不会影响链接。"
         >
           <Input value={`/series/${series.slug}`} readOnly />
         </Form.Item>
       ) : (
         <Form.Item
-          label="系列链接"
+          label="系列路径（可选）"
           name="slug"
-          extra="使用小写英文、数字和连字符，创建后保持固定。"
+          extra="留空时根据名称自动生成拼音路径；也可填写小写英文、数字和连字符。创建后保持固定。"
           rules={[
-            { required: true, message: '请输入链接名称' },
             {
               pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
               message: '例如 blog-engineering，不含空格或中文',
@@ -291,7 +294,7 @@ export default function SeriesEditor({
         >
           <Input
             addonBefore="/series/"
-            placeholder="blog-engineering"
+            placeholder="留空，根据系列名称自动生成"
             maxLength={160}
           />
         </Form.Item>
