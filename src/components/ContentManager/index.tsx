@@ -30,10 +30,10 @@ export default function ContentManager({ resource }: { resource: Resource }) {
   useEffect(() => {
     if (!isPost) return;
     void Promise.all(
-      ['/api/categories', '/api/tags'].map((r) => api(r + '?scope=admin')),
+      ['/api/categories', '/api/tags', '/api/series'].map((r) => api(r + '?scope=admin')),
     )
-      .then(([categories, tags]) =>
-        setOptions({ categories: categories.data, tags: tags.data, series: [] }),
+      .then(([categories, tags, series]) =>
+        setOptions({ categories: categories.data, tags: tags.data, series: series.data }),
       )
       .catch((e) => message.error(e.message));
   }, [isPost, message]);
@@ -294,6 +294,15 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                         mode="tags"
                         options={options.tags.map((t) => ({ label: t.name, value: t.name }))}
                       />
+                    </Form.Item>
+                    <Form.Item name="seriesId" label="系列">
+                      <Select
+                        allowClear
+                        options={options.series.map((s) => ({ label: s.name, value: s.id }))}
+                      />
+                    </Form.Item>
+                    <Form.Item name="seriesOrder" label="系列序号">
+                      <Input type="number" min={1} />
                     </Form.Item>
                     <Form.Item name="cover" label="封面 URL">
                       <Input />
