@@ -1,11 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
-import { PageContainer, ProTable, ActionType } from '@ant-design/pro-components';
-import { App, Button, Drawer, Form, Input, Select, Switch, Upload } from 'antd';
+import {
+  type ActionType,
+  PageContainer,
+  ProTable,
+} from '@ant-design/pro-components';
 import type { UploadProps } from 'antd';
+import { App, Button, Drawer, Form, Input, Select, Switch, Upload } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import MarkdownEditor from '@/components/MyEditor';
 import Preview from '@/components/SafeMarkdown';
+import type {
+  ContentDetail,
+  ContentList,
+  ContentSummary,
+  Envelope,
+} from '@/types/content';
 import { api, creationKey, uploadImage } from '@/utils/api';
-import type { ContentDetail, ContentSummary, ContentList, Envelope } from '@/types/content';
+
 type Resource = 'posts' | 'notes' | 'dynamics';
 const labels = { posts: '文章', notes: '笔记', dynamics: '动态' };
 export default function ContentManager({ resource }: { resource: Resource }) {
@@ -16,7 +26,11 @@ export default function ContentManager({ resource }: { resource: Resource }) {
   const [edit, setEdit] = useState<ContentDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [options, setOptions] = useState<{ categories: any[]; tags: any[]; series: any[] }>({
+  const [options, setOptions] = useState<{
+    categories: any[];
+    tags: any[];
+    series: any[];
+  }>({
     categories: [],
     tags: [],
     series: [],
@@ -30,14 +44,21 @@ export default function ContentManager({ resource }: { resource: Resource }) {
   useEffect(() => {
     if (!isPost) return;
     void Promise.all(
-      ['/api/categories', '/api/tags'].map((r) => api(r + '?scope=admin')),
+      ['/api/categories', '/api/tags', '/api/series'].map((r) =>
+        api(r + '?scope=admin'),
+      ),
     )
-      .then(([categories, tags]) =>
-        setOptions({ categories: categories.data, tags: tags.data, series: [] }),
+      .then(([categories, tags, series]) =>
+        setOptions({
+          categories: categories.data,
+          tags: tags.data,
+          series: series.data,
+        }),
       )
       .catch((e) => message.error(e.message));
   }, [isPost, message]);
-  const keyOf = (row: ContentSummary) => (resource === 'dynamics' ? row.id : row.slug!);
+  const keyOf = (row: ContentSummary) =>
+    resource === 'dynamics' ? row.id : row.slug!;
   const editRow = async (row: ContentSummary) => {
     const current = ++generation.current;
     setOpen(true);
@@ -47,11 +68,18 @@ export default function ContentManager({ resource }: { resource: Resource }) {
     key.current = {};
     try {
       const result = await api<Envelope<ContentDetail>>(
-        '/api/' + resource + '/' + encodeURIComponent(keyOf(row)) + '?scope=admin',
+        '/api/' +
+          resource +
+          '/' +
+          encodeURIComponent(keyOf(row)) +
+          '?scope=admin',
       );
       if (current === generation.current) {
         setEdit(result.data);
-        form.setFieldsValue({ ...result.data, categoryId: result.data.category?.id });
+        form.setFieldsValue({
+          ...result.data,
+          categoryId: result.data.category?.id,
+        });
       }
     } catch (e: any) {
       if (current === generation.current) {
@@ -104,11 +132,19 @@ export default function ContentManager({ resource }: { resource: Resource }) {
               excerpt: values.excerpt,
               published: values.published,
             };
-      await api('/api/' + resource + (edit ? '/' + encodeURIComponent(keyOf(edit)) : ''), {
-        method: edit ? 'PUT' : 'POST',
-        body: JSON.stringify(payload),
-        headers: !edit && isPost ? { 'Idempotency-Key': creationKey(key.current, payload) } : {},
-      });
+      await api(
+        '/api/' +
+          resource +
+          (edit ? '/' + encodeURIComponent(keyOf(edit)) : ''),
+        {
+          method: edit ? 'PUT' : 'POST',
+          body: JSON.stringify(payload),
+          headers:
+            !edit && isPost
+              ? { 'Idempotency-Key': creationKey(key.current, payload) }
+              : {},
+        },
+      );
       key.current = {};
       close();
       action.current?.reload();
@@ -179,13 +215,26 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                 },
               ]
             : []),
-          { title: '创建时间', dataIndex: 'createdAt', valueType: 'dateTime', search: false },
-          { title: '首次发布', dataIndex: 'publishedAt', valueType: 'dateTime', search: false },
+          {
+            title: '创建时间',
+            dataIndex: 'createdAt',
+            valueType: 'dateTime',
+            search: false,
+          },
+          {
+            title: '首次发布',
+            dataIndex: 'publishedAt',
+            valueType: 'dateTime',
+            search: false,
+          },
           {
             title: '操作',
             valueType: 'option',
             render: (_, r) => [
-              <a key="publish" onClick={() => mutate(r, { published: !r.published })}>
+              <a
+                key="publish"
+                onClick={() => mutate(r, { published: !r.published })}
+              >
                 {r.published ? '隐藏' : '发布'}
               </a>,
               <a key="edit" onClick={() => editRow(r)}>
@@ -199,9 +248,12 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                     content:
                       '删除后不会因旧创建请求重试而恢复。同步笔记需同时在本地处理，避免再次同步。',
                     onOk: async () => {
-                      await api('/api/' + resource + '/' + encodeURIComponent(keyOf(r)), {
-                        method: 'DELETE',
-                      });
+                      await api(
+                        '/api/' + resource + '/' + encodeURIComponent(keyOf(r)),
+                        {
+                          method: 'DELETE',
+                        },
+                      );
                       action.current?.reload();
                     },
                   })
@@ -231,7 +283,12 @@ export default function ContentManager({ resource }: { resource: Resource }) {
         width="80%"
         destroyOnClose
         extra={
-          <Button type="primary" disabled={loading} loading={saving} onClick={save}>
+          <Button
+            type="primary"
+            disabled={loading}
+            loading={saving}
+            onClick={save}
+          >
             保存
           </Button>
         }
@@ -242,7 +299,9 @@ export default function ContentManager({ resource }: { resource: Resource }) {
           <Form name={'content-' + resource} form={form} layout="vertical">
             {isNote ? (
               <>
-                <p>正文、分类和标签请在本地修改后同步。发布状态与类型由后台保留。</p>
+                <p>
+                  正文、分类和标签请在本地修改后同步。发布状态与类型由后台保留。
+                </p>
                 <Form.Item name="kind" label="类型">
                   <Select
                     options={[
@@ -255,7 +314,11 @@ export default function ContentManager({ resource }: { resource: Resource }) {
               </>
             ) : (
               <>
-                <Form.Item name="title" label="标题" rules={isPost ? [{ required: true }] : []}>
+                <Form.Item
+                  name="title"
+                  label="标题"
+                  rules={isPost ? [{ required: true }] : []}
+                >
                   <Input maxLength={255} />
                 </Form.Item>
                 {isPost && !edit && (
@@ -275,10 +338,16 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                 <Form.Item name="excerpt" label="摘要">
                   <Input.TextArea />
                 </Form.Item>
-                <Form.Item name="content" label="正文" rules={[{ required: true }]}>
+                <Form.Item
+                  name="content"
+                  label="正文"
+                  rules={[{ required: true }]}
+                >
                   <MarkdownEditor
                     value={content}
-                    onChange={(v: string | undefined) => form.setFieldValue('content', v)}
+                    onChange={(v: string | undefined) =>
+                      form.setFieldValue('content', v)
+                    }
                   />
                 </Form.Item>
                 {isPost && (
@@ -286,14 +355,32 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                     <Form.Item name="categoryId" label="分类">
                       <Select
                         allowClear
-                        options={options.categories.map((c) => ({ label: c.name, value: c.id }))}
+                        options={options.categories.map((c) => ({
+                          label: c.name,
+                          value: c.id,
+                        }))}
                       />
                     </Form.Item>
                     <Form.Item name="tags" label="标签">
                       <Select
                         mode="tags"
-                        options={options.tags.map((t) => ({ label: t.name, value: t.name }))}
+                        options={options.tags.map((t) => ({
+                          label: t.name,
+                          value: t.name,
+                        }))}
                       />
+                    </Form.Item>
+                    <Form.Item name="seriesId" label="系列">
+                      <Select
+                        allowClear
+                        options={options.series.map((s) => ({
+                          label: s.name,
+                          value: s.id,
+                        }))}
+                      />
+                    </Form.Item>
+                    <Form.Item name="seriesOrder" label="系列序号">
+                      <Input type="number" min={1} />
                     </Form.Item>
                     <Form.Item name="cover" label="封面 URL">
                       <Input />
@@ -305,7 +392,11 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                 )}
               </>
             )}
-            <Form.Item name="published" label="公开发布" valuePropName="checked">
+            <Form.Item
+              name="published"
+              label="公开发布"
+              valuePropName="checked"
+            >
               <Switch />
             </Form.Item>
           </Form>
