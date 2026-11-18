@@ -9,11 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: bash -n scripts/check-deploy-readiness.sh tests/check-deploy-readiness.test.sh
-      - run: bash tests/check-deploy-readiness.test.sh
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - run: node --test tests/deployment-compatibility.test.mjs tests/deployment-admin.test.mjs
+      - run: bash -n scripts/deploy-admin.sh tests/deploy-admin.test.sh
+      - run: bash tests/deploy-admin.test.sh
       - run: npm install -g pnpm@12.3.4
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:unit

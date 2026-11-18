@@ -19,6 +19,6 @@ BLOG_API_BASE_URL 指定 API 地址：本地默认为 http://localhost:3000，�
 
 依赖安装使用 pnpm install --frozen-lockfile，postinstall 会运行 max setup 生成匹配依赖版本的 .umi 类型。pnpm 通过 node-linker=hoisted 保持 Umi 所需的扁平依赖布局；不混用旧 node_modules 或 .umi 生成物。构建脚本批准在 pnpm-workspace.yaml，版本不符会失败，不自动下载替换。Jest 与 jest-environment-jsdom 使用同一主版本。依赖迁移验收见 [docs/pnpm迁移验收.md](docs/pnpm迁移验收.md)。
 
-发布前先让 API 提供 header 验证等兼容能力，再适配后台，最后启用 API 强制鉴权和旧 token URL 停用。旧 API 尚未支持动态草稿前，勿用新界面创建动态。production 部署必须等检查、评审、备份恢复/迁移就绪和配对验收完成。
+发布顺序为前台/API → 后台。production 发布先通过 CI，自动检查正式 API 所需能力，再切换静态产物并核验页面和资源；失败恢复上一版。首次切换后核对管理操作，安全鉴权保持启用。
 
-部署前置条件、变量含义与首次发布顺序见 [docs/部署前置检查与发布顺序.md](docs/部署前置检查与发布顺序.md)。缺项会在 Actions 日志与 Summary 列明；API 实际就绪后手动运行部署 workflow 的 main。后台发布串行执行，不取消运行中的任务。
+自动备份、恢复核验、API 能力检测和健康回退见 [docs/部署前置检查与发布顺序.md](docs/部署前置检查与发布顺序.md)。日常更新合并 main 后通过 CI 自动部署，不再手填就绪标志；手动 Run workflow → main 可重跑当前版本。
