@@ -34,6 +34,13 @@ jobs:
       - name: Verify live API compatibility automatically
         run: node scripts/check-api-compatibility.mjs
 
+      - name: Verify admin HTTP access before preparing files
+        timeout-minutes: 1
+        env:
+          BLOG_ADMIN_HTTP_USERNAME: ${{ secrets.BLOG_ADMIN_HTTP_USERNAME }}
+          BLOG_ADMIN_HTTP_PASSWORD: ${{ secrets.BLOG_ADMIN_HTTP_PASSWORD }}
+        run: node scripts/check-admin-health.mjs --access-check "$BLOG_ADMIN_SITE_URL"
+
       - name: 安装 pnpm
         run: npm install -g pnpm@12.3.4
 
@@ -71,12 +78,14 @@ jobs:
           BLOG_ADMIN_SITE_URL: ${{ env.BLOG_ADMIN_SITE_URL }}
           BLOG_API_BASE_URL: ${{ env.BLOG_API_BASE_URL }}
           RELEASE_ID: ${{ env.RELEASE_ID }}
+          BLOG_ADMIN_HTTP_USERNAME: ${{ secrets.BLOG_ADMIN_HTTP_USERNAME }}
+          BLOG_ADMIN_HTTP_PASSWORD: ${{ secrets.BLOG_ADMIN_HTTP_PASSWORD }}
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.ALIYUN_SERVER_IP }}
           username: root
           key: ${{ secrets.ALIYUN_SSH_KEY }}
-          envs: BLOG_ADMIN_SITE_URL,BLOG_API_BASE_URL,RELEASE_ID
+          envs: BLOG_ADMIN_SITE_URL,BLOG_API_BASE_URL,RELEASE_ID,BLOG_ADMIN_HTTP_USERNAME,BLOG_ADMIN_HTTP_PASSWORD
           script: |
             bash "/home/www/my-blog-admin/releases/$RELEASE_ID/deploy-admin.sh" \
               /home/www/my-blog-admin "$RELEASE_ID" "$BLOG_ADMIN_SITE_URL" "$BLOG_API_BASE_URL"

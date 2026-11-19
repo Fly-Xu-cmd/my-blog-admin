@@ -11,7 +11,7 @@ prepare() {
   echo legacy > "$root/dist/index.html"
   echo new > "$root/releases/$id/dist/index.html"
   echo "$id" > "$root/releases/$id/dist/deploy-version.txt"
-  printf 'process.exit(%s);\n' "$2" > "$root/releases/$id/check-admin-health.mjs"
+  printf 'process.exit(process.argv[2] === "--access-check" ? 0 : %s);\n' "$2" > "$root/releases/$id/check-admin-health.mjs"
   echo 'process.exit(0);' > "$root/releases/$id/check-api-compatibility.mjs"
 }
 prepare success 0
@@ -30,4 +30,10 @@ prepare api_before 0
 echo 'process.exit(1);' > "$root/releases/$id/check-api-compatibility.mjs"
 if bash "$source_root/scripts/deploy-admin.sh" "$root" "$id" http://example.test http://api.test; then exit 1; fi
 [[ -d $root/dist && ! -L $root/dist && $(cat "$root/dist/index.html") == legacy ]]
-echo 'Admin release checks passed: legacy adoption, healthy switch, rollback and incorrect marker'
+prepare access_before 0
+echo 'process.exit(process.argv[2] === "--access-check" ? 1 : 0);' > "$root/releases/$id/check-admin-health.mjs"
+if bash "$source_root/scripts/deploy-admin.sh" "$root" "$id" http://example.test http://api.test; then exit 1; fi
+[[ -d $root/dist && ! -L $root/dist && $(cat "$root/dist/index.html") == legacy ]]
+[[ ! -e "$root/.deploy-state/$id" && ! -e "$root/releases/legacy-$id" ]]
+
+echo 'Admin release checks passed: access failure before switch, legacy adoption, healthy switch, rollback and incorrect marker'
