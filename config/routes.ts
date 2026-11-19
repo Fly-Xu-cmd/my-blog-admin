@@ -97,6 +97,7 @@ export default [
         path: '/manage/about',
         component: './about-settings',
       },
+      { name: 'feedback', path: '/manage/feedback', component: './feedback' },
     ],
   },
   {
