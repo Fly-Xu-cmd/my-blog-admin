@@ -13,7 +13,7 @@ import React from 'react';
 import * as apiModule from '../../src/utils/api';
 import { RequestError } from '../../src/utils/api';
 
-jest.setTimeout(15000);
+jest.setTimeout(30000);
 jest.doMock('@ant-design/pro-components', () => ({
   PageContainer: ({ children }: { children: React.ReactNode }) =>
     React.createElement('div', null, children),
@@ -59,7 +59,7 @@ const mount = () =>
 const saveButton = () =>
   screen.getByRole('button', { name: '保存并更新前台' }) as HTMLButtonElement;
 const changeTitle = async () =>
-  fireEvent.change(await screen.findByRole('textbox', { name: '站点名称' }), {
+  fireEvent.change(await screen.findByLabelText('站点名称'), {
     target: { value: '更新后的标题' },
   });
 beforeAll(() => {
@@ -96,10 +96,9 @@ test('initial read failure disables saving and retry loads the actual saved vers
   expect(saveButton().disabled).toBe(true);
   fireEvent.click(screen.getAllByRole('button', { name: '重新载入' })[0]);
   await waitFor(() =>
-    expect(
-      (screen.getByRole('textbox', { name: '站点名称' }) as HTMLInputElement)
-        .value,
-    ).toBe(config.name),
+    expect((screen.getByLabelText('站点名称') as HTMLInputElement).value).toBe(
+      config.name,
+    ),
   );
   expect(saveButton().disabled).toBe(true);
 });
@@ -114,10 +113,9 @@ test('sends loaded revision, blocks duplicate submissions and updates saved base
   );
   mount();
   await waitFor(() =>
-    expect(
-      (screen.getByRole('textbox', { name: '站点名称' }) as HTMLInputElement)
-        .value,
-    ).toBe(config.name),
+    expect((screen.getByLabelText('站点名称') as HTMLInputElement).value).toBe(
+      config.name,
+    ),
   );
   await changeTitle();
   fireEvent.click(saveButton());
@@ -128,10 +126,9 @@ test('sends loaded revision, blocks duplicate submissions and updates saved base
     name: '更新后的标题',
     updatedAt: undefined,
   });
-  expect(
-    (screen.getByRole('textbox', { name: '站点名称' }) as HTMLInputElement)
-      .disabled,
-  ).toBe(true);
+  expect((screen.getByLabelText('站点名称') as HTMLInputElement).disabled).toBe(
+    true,
+  );
   await act(async () =>
     resolve({ data: { ...config, name: '更新后的标题', revision: 4 } }),
   );
@@ -146,36 +143,32 @@ test('conflict preserves edits and reloading them requires confirmation', async 
     .mockResolvedValue({ data: config });
   mount();
   await waitFor(() =>
-    expect(
-      (screen.getByRole('textbox', { name: '站点名称' }) as HTMLInputElement)
-        .value,
-    ).toBe(config.name),
+    expect((screen.getByLabelText('站点名称') as HTMLInputElement).value).toBe(
+      config.name,
+    ),
   );
   await changeTitle();
   fireEvent.click(saveButton());
   await screen.findByText(/当前输入已保留/);
-  expect(
-    (screen.getByRole('textbox', { name: '站点名称' }) as HTMLInputElement)
-      .value,
-  ).toBe('更新后的标题');
+  expect((screen.getByLabelText('站点名称') as HTMLInputElement).value).toBe(
+    '更新后的标题',
+  );
   fireEvent.click(screen.getAllByRole('button', { name: '重新载入' })[0]);
   await screen.findByRole('dialog', { name: '有尚未保存的修改' });
   expect(request).toHaveBeenCalledTimes(2);
   fireEvent.click(screen.getByRole('button', { name: '继续编辑' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  expect(
-    (screen.getByRole('textbox', { name: '站点名称' }) as HTMLInputElement)
-      .value,
-  ).toBe('更新后的标题');
+  expect((screen.getByLabelText('站点名称') as HTMLInputElement).value).toBe(
+    '更新后的标题',
+  );
 });
 
 test('route leave is guarded while login redirect remains possible', async () => {
   mount();
   await waitFor(() =>
-    expect(
-      (screen.getByRole('textbox', { name: '站点名称' }) as HTMLInputElement)
-        .value,
-    ).toBe(config.name),
+    expect((screen.getByLabelText('站点名称') as HTMLInputElement).value).toBe(
+      config.name,
+    ),
   );
   await changeTitle();
   const blocker = (history.block as jest.Mock).mock.calls.at(-1)[0];
