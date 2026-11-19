@@ -97,6 +97,11 @@ export default [
         path: '/manage/about',
         component: './about-settings',
       },
+      {
+        name: 'reading-entry',
+        path: '/manage/reading-entry',
+        component: './reading-entry',
+      },
     ],
   },
   {

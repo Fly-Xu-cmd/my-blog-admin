@@ -1,4 +1,5 @@
 export default {
+  'menu.manage.reading-entry': '首页阅读入口',
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',
   'menu.home': '首页',
