@@ -12,6 +12,7 @@ test -f "$candidate/index.html"
 test "$(cat "$candidate/deploy-version.txt")" = "$id"
 command -v node >/dev/null
 node "$root/releases/$id/check-api-compatibility.mjs" "$api" --once
+node "$root/releases/$id/check-admin-health.mjs" --access-check "$site"
 state="$root/.deploy-state/$id"
 [[ ! -e $state ]]
 mkdir -p -- "$state"

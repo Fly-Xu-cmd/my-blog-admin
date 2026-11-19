@@ -22,3 +22,5 @@ BLOG_API_BASE_URL 指定 API 地址：本地默认为 http://localhost:3000，�
 发布顺序为前台/API → 后台。production 发布先通过 CI，自动检查正式 API 所需能力，再切换静态产物并核验页面和资源；失败恢复上一版。首次切换后核对管理操作，安全鉴权保持启用。
 
 自动备份、恢复核验、API 能力检测和健康回退见 [docs/部署前置检查与发布顺序.md](docs/部署前置检查与发布顺序.md)。日常更新合并 main 后通过 CI 自动部署，不再手填就绪标志；手动 Run workflow → main 可重跑当前版本。
+
+后台域名若启用 Nginx Basic Auth，在本仓库 Repository secrets 配置 BLOG_ADMIN_HTTP_USERNAME、BLOG_ADMIN_HTTP_PASSWORD，使用网页弹窗的用户名/密码，与应用 JWT 登录相互独立。凭据只供 CI 与远端探活使用，不写入前端构建、运行包、URL 或日志。CI 上传前和服务器切换前检查 HTTP 访问权限，401 显示具体阶段及配置提示；发布标识、页面、JS/CSS 和 API 能力检查仍须全部通过。未启用 Basic Auth 的站点可不配置这两项。
