@@ -92,6 +92,11 @@ export default [
         path: '/manage/dynamic',
         component: './dynamic-manage',
       },
+      {
+        name: 'about',
+        path: '/manage/about',
+        component: './about-settings',
+      },
     ],
   },
   {

@@ -55,6 +55,7 @@ export default {
   'menu.new.category': '分类',
   'menu.manage': '管理',
   'menu.manage.post': '文章管理',
+  'menu.manage.about': '关于页设置',
   'menu.manage.dynamic': '动态管理',
   'menu.analysis': '数据分析',
 };

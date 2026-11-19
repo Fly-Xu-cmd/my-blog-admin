@@ -1,13 +1,12 @@
-import { uploadImage as uploadAuthenticatedImage } from '@/utils/api';
-import { commands } from '@uiw/react-md-editor';
+import MDEditor, { commands } from '@uiw/react-md-editor';
+import { useId } from 'react';
 import { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import MDEditor from '@uiw/react-md-editor';
-import { useId } from 'react';
+import { uploadImage as uploadAuthenticatedImage } from '@/utils/api';
 
 export default function MarkdownEditor(props: {
-  value: string;
-  onChange: any;
+  value?: string;
+  onChange?: (value: string) => void;
   height?: number;
   baseUrl?: string;
   id?: string;
@@ -69,7 +68,7 @@ export default function MarkdownEditor(props: {
       <MDEditor
         id={id}
         value={initialValue}
-        onChange={onChange}
+        onChange={(value) => onChange?.(value ?? '')}
         height={height}
         preview="live"
         previewOptions={{
