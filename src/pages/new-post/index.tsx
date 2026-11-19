@@ -1,6 +1,3 @@
-import { creationKey, uploadImage } from '@/utils/api';
-import { MarkdownEditor, SummaryInput, TitleInput } from '@/components';
-import { addPost, getCategories, getTags } from '@/services/nextjs/index';
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import {
@@ -18,12 +15,18 @@ import {
   Typography,
   Upload,
 } from 'antd';
-import { useEffect, useId, useMemo, useState, useRef } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { MarkdownEditor, SummaryInput, TitleInput } from '@/components';
+import { useWritingDraft } from '@/components/WritingDraft';
+import WritingGuard from '@/components/WritingGuard';
+import { addPost, getCategories, getTags } from '@/services/nextjs/index';
+import { creationKey, uploadImage } from '@/utils/api';
 
 const baseUrl = process.env.BASE_API_URL || 'http://localhost:3000/';
 
 // 七牛云返回的是完整 URL；只有相对路径才需要拼接 baseUrl
-const resolveImageUrl = (url?: string) => (url && !/^https?:\/\//.test(url) ? baseUrl + url : url);
+const resolveImageUrl = (url?: string) =>
+  url && !/^https?:\/\//.test(url) ? baseUrl + url : url;
 
 const NewPost: React.FC = () => {
   const { message } = App.useApp();
@@ -47,11 +50,47 @@ const NewPost: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState<any[]>([]);
   const [categoryValue, setCategoryValue] = useState<number | undefined>();
-  const [categoryOptions, setCategoryOptions] = useState<{ label: string; value: number }[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<
+    { label: string; value: number }[]
+  >([]);
   const [tags, setTags] = useState<string[] | undefined>([]);
-  const [tagOptions, setTagOptions] = useState<{ label: string; value: string }[]>([]);
+  const [tagOptions, setTagOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [autoGenerateTitle, setAutoGenerateTitle] = useState(false);
   const [autoGenerateSummary, setAutoGenerateSummary] = useState(false);
+  const [editorUploading, setEditorUploading] = useState(false);
+  const fields = {
+    title,
+    excerpt,
+    content,
+    cover: imageUrl,
+    slug,
+    categoryId: categoryValue,
+    tags,
+    autoGenerateTitle,
+    autoGenerateSummary,
+  };
+  const baseline = useRef(JSON.stringify(fields));
+  const dirty = JSON.stringify(fields) !== baseline.current;
+  const draft = useWritingDraft(
+    'new-post',
+    fields,
+    dirty,
+    requestKey,
+    (value) => {
+      setTitle(value.title);
+      setExcerpt(value.excerpt);
+      setContent(value.content || '');
+      setImageUrl(value.cover || '');
+      setSlug(value.slug || '');
+      setCategoryValue(value.categoryId);
+      setTags(value.tags || []);
+      setAutoGenerateTitle(!!value.autoGenerateTitle);
+      setAutoGenerateSummary(!!value.autoGenerateSummary);
+    },
+    submitting || loading || editorUploading,
+  );
 
   const selectedTags = useMemo(() => tags || [], [tags]);
 
@@ -95,6 +134,10 @@ const NewPost: React.FC = () => {
 
   const submitPost = async (nextPublished: boolean) => {
     if (submittingRef.current) return;
+    if (loading || editorUploading) {
+      message.info('图片上传完成后再保存');
+      return;
+    }
     if ((!title && !autoGenerateTitle) || !content) {
       message.error('缺少标题和内容');
       return;
@@ -114,18 +157,37 @@ const NewPost: React.FC = () => {
         autoGenerateSummary,
         ...(slug ? { slug } : {}),
       };
-      const result = await addPost(payload, creationKey(requestKey.current, payload));
+      const idempotencyKey = creationKey(requestKey.current, payload);
+      draft.persist();
+      const result = await addPost(payload, idempotencyKey);
       if (!result.ok) throw new Error(result.error || '保存失败');
       requestKey.current = {};
+      draft.clear();
+      baseline.current = JSON.stringify({
+        title: '',
+        excerpt: '',
+        content: '',
+        cover: '',
+        slug: '',
+        categoryId: undefined,
+        tags: [],
+        autoGenerateTitle: false,
+        autoGenerateSummary: false,
+      });
       setTitle('');
       setExcerpt('');
       setSlug('');
       setContent('');
       setImageUrl('');
       setTags([]);
+      setCategoryValue(undefined);
+      setAutoGenerateTitle(false);
+      setAutoGenerateSummary(false);
       message.success(nextPublished ? '发布成功' : '草稿已保存');
     } catch (e: any) {
-      message.error(e.response?.data?.error || e.message || '请求失败，可重试原请求');
+      message.error(
+        e.response?.data?.error || e.message || '请求失败，可重试原请求',
+      );
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -133,7 +195,9 @@ const NewPost: React.FC = () => {
   };
 
   const uploadButton = (
-    <div style={{ width: 104, height: 104, display: 'grid', placeItems: 'center' }}>
+    <div
+      style={{ width: 104, height: 104, display: 'grid', placeItems: 'center' }}
+    >
       {loading ? <LoadingOutlined /> : <PlusOutlined />}
       <div style={{ marginTop: 8 }}>上传封面</div>
     </div>
@@ -144,6 +208,7 @@ const NewPost: React.FC = () => {
     setFileList([...fileList, file]);
     if (!isJpgOrPng) {
       message.error('只能上传 JPG/PNG 格式的图片!');
+      return Upload.LIST_IGNORE;
     }
     setLoading(true);
     return isJpgOrPng;
@@ -172,170 +237,188 @@ const NewPost: React.FC = () => {
           <Button disabled={submitting} onClick={() => submitPost(false)}>
             保存草稿
           </Button>
-          <Button type="primary" loading={submitting} onClick={() => submitPost(true)}>
+          <Button
+            type="primary"
+            loading={submitting}
+            onClick={() => submitPost(true)}
+          >
             发布博客
           </Button>
         </Space>
       }
     >
-      <Row gutter={[24, 24]} align="stretch">
-        <Col xs={24} lg={16}>
-          <Card
-            title="文章内容"
-            extra={<Tag color="blue">Markdown</Tag>}
-            styles={{ body: { paddingTop: 16 } }}
-          >
-            <Flex vertical gap={24}>
-              <Input
-                placeholder="链接 slug（留空自动生成拼音）"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                maxLength={160}
-              />
-              <Flex vertical gap={8}>
-                <Flex align="center" justify="space-between">
-                  <Typography.Text strong>标题</Typography.Text>
-                  <Switch
-                    size="small"
-                    checked={autoGenerateTitle}
-                    onChange={setAutoGenerateTitle}
-                    checkedChildren="自动生成"
-                    unCheckedChildren="手动输入"
+      <WritingGuard
+        dirty={dirty}
+        busy={submitting || loading || editorUploading}
+      />
+      {draft.notice}
+      <fieldset
+        disabled={submitting}
+        inert={submitting || undefined}
+        style={{ border: 0, margin: 0, padding: 0 }}
+      >
+        <Row gutter={[24, 24]} align="stretch">
+          <Col xs={24} lg={16}>
+            <Card
+              title="文章内容"
+              extra={<Tag color="blue">Markdown</Tag>}
+              styles={{ body: { paddingTop: 16 } }}
+            >
+              <Flex vertical gap={24}>
+                <Input
+                  placeholder="链接 slug（留空自动生成拼音）"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  maxLength={160}
+                />
+                <Flex vertical gap={8}>
+                  <Flex align="center" justify="space-between">
+                    <Typography.Text strong>标题</Typography.Text>
+                    <Switch
+                      size="small"
+                      checked={autoGenerateTitle}
+                      onChange={setAutoGenerateTitle}
+                      checkedChildren="自动生成"
+                      unCheckedChildren="手动输入"
+                    />
+                  </Flex>
+                  <TitleInput
+                    id={titleId}
+                    value={title}
+                    disabled={autoGenerateTitle}
+                    onTitleChange={(val: string) => setTitle(val)}
                   />
                 </Flex>
-                <TitleInput
-                  id={titleId}
-                  value={title}
-                  disabled={autoGenerateTitle}
-                  onTitleChange={(val: string) => setTitle(val)}
-                />
-              </Flex>
 
-              <Flex vertical gap={8}>
-                <Flex align="center" justify="space-between">
-                  <Typography.Text strong>摘要</Typography.Text>
-                  <Switch
-                    size="small"
-                    checked={autoGenerateSummary}
-                    onChange={setAutoGenerateSummary}
-                    checkedChildren="自动生成"
-                    unCheckedChildren="手动输入"
+                <Flex vertical gap={8}>
+                  <Flex align="center" justify="space-between">
+                    <Typography.Text strong>摘要</Typography.Text>
+                    <Switch
+                      size="small"
+                      checked={autoGenerateSummary}
+                      onChange={setAutoGenerateSummary}
+                      checkedChildren="自动生成"
+                      unCheckedChildren="手动输入"
+                    />
+                  </Flex>
+                  <SummaryInput
+                    id={excerptId}
+                    value={excerpt}
+                    disabled={autoGenerateSummary}
+                    onSummaryChange={(val: string) => setExcerpt(val)}
                   />
                 </Flex>
-                <SummaryInput
-                  id={excerptId}
-                  value={excerpt}
-                  disabled={autoGenerateSummary}
-                  onSummaryChange={(val: string) => setExcerpt(val)}
-                />
-              </Flex>
 
-              <Flex vertical gap={8}>
-                <Flex align="center" justify="space-between">
-                  <Typography.Text strong>内容</Typography.Text>
-                  <Typography.Text type="secondary">
-                    支持列表、引用、代码块、表格等 Markdown 语法
-                  </Typography.Text>
+                <Flex vertical gap={8}>
+                  <Flex align="center" justify="space-between">
+                    <Typography.Text strong>内容</Typography.Text>
+                    <Typography.Text type="secondary">
+                      支持列表、引用、代码块、表格等 Markdown 语法
+                    </Typography.Text>
+                  </Flex>
+                  <MarkdownEditor
+                    disabled={submitting}
+                    onUploadingChange={setEditorUploading}
+                    id={contentId}
+                    height={560}
+                    value={content}
+                    onChange={setContent}
+                    baseUrl={baseUrl}
+                  />
                 </Flex>
-                <MarkdownEditor
-                  id={contentId}
-                  height={560}
-                  value={content}
-                  onChange={setContent}
-                  baseUrl={baseUrl}
-                />
               </Flex>
-            </Flex>
-          </Card>
-        </Col>
+            </Card>
+          </Col>
 
-        <Col xs={24} lg={8}>
-          <Card title="发布设置" styles={{ body: { paddingTop: 16 } }}>
-            <Flex vertical gap={20}>
-              <div>
-                <Typography.Text strong>封面图片</Typography.Text>
-                <div style={{ marginTop: 12 }}>
-                  <Upload
-                    id={coverId}
-                    name="file"
-                    listType="picture-card"
-                    className="avatar-uploader"
-                    showUploadList={false}
-                    fileList={fileList}
-                    customRequest={async (opts) => {
-                      try {
-                        const url = await uploadImage(opts.file as File);
-                        setImageUrl(url);
-                        opts.onSuccess?.({ url });
-                      } catch (e: any) {
-                        opts.onError?.(e);
-                      }
+          <Col xs={24} lg={8}>
+            <Card title="发布设置" styles={{ body: { paddingTop: 16 } }}>
+              <Flex vertical gap={20}>
+                <div>
+                  <Typography.Text strong>封面图片</Typography.Text>
+                  <div style={{ marginTop: 12 }}>
+                    <Upload
+                      disabled={submitting || loading}
+                      id={coverId}
+                      name="file"
+                      listType="picture-card"
+                      className="avatar-uploader"
+                      showUploadList={false}
+                      fileList={fileList}
+                      customRequest={async (opts) => {
+                        try {
+                          const url = await uploadImage(opts.file as File);
+                          setImageUrl(url);
+                          opts.onSuccess?.({ url });
+                        } catch (e: any) {
+                          opts.onError?.(e);
+                        }
+                      }}
+                      beforeUpload={beforeUpload}
+                      onChange={handleChange}
+                    >
+                      {imageUrl ? (
+                        <img
+                          draggable={false}
+                          src={resolveImageUrl(imageUrl)}
+                          alt="cover"
+                          style={{ width: '100%', borderRadius: 12 }}
+                        />
+                      ) : (
+                        uploadButton
+                      )}
+                    </Upload>
+                  </div>
+                </div>
+
+                <div>
+                  <Typography.Text strong>分类</Typography.Text>
+                  <Select
+                    id={categoryId}
+                    placeholder="请选择分类"
+                    allowClear
+                    style={{ width: '100%', marginTop: 8 }}
+                    options={categoryOptions}
+                    value={categoryValue}
+                    onChange={(e) => {
+                      setCategoryValue(e);
                     }}
-                    beforeUpload={beforeUpload}
-                    onChange={handleChange}
-                  >
-                    {imageUrl ? (
-                      <img
-                        draggable={false}
-                        src={resolveImageUrl(imageUrl)}
-                        alt="cover"
-                        style={{ width: '100%', borderRadius: 12 }}
-                      />
-                    ) : (
-                      uploadButton
-                    )}
-                  </Upload>
+                  />
                 </div>
-              </div>
 
-              <div>
-                <Typography.Text strong>分类</Typography.Text>
-                <Select
-                  id={categoryId}
-                  placeholder="请选择分类"
-                  allowClear
-                  style={{ width: '100%', marginTop: 8 }}
-                  options={categoryOptions}
-                  value={categoryValue}
-                  onChange={(e) => {
-                    setCategoryValue(e);
-                  }}
-                />
-              </div>
-
-              <div>
-                <Typography.Text strong>标签</Typography.Text>
-                <Select
-                  id={tagsId}
-                  placeholder="请选择标签(多选)"
-                  style={{ width: '100%', marginTop: 8 }}
-                  mode="tags"
-                  allowClear
-                  value={tags}
-                  options={
-                    tagOptions.length
-                      ? tagOptions
-                      : [
-                          { label: 'React', value: 'React' },
-                          { label: 'Next.js', value: 'Next.js' },
-                        ]
-                  }
-                  onChange={(e) => {
-                    setTags(e as string[]);
-                  }}
-                />
-                <div style={{ marginTop: 12 }}>
-                  {selectedTags.map((tag) => (
-                    <Tag key={tag} color="geekblue">
-                      {tag}
-                    </Tag>
-                  ))}
+                <div>
+                  <Typography.Text strong>标签</Typography.Text>
+                  <Select
+                    id={tagsId}
+                    placeholder="请选择标签(多选)"
+                    style={{ width: '100%', marginTop: 8 }}
+                    mode="tags"
+                    allowClear
+                    value={tags}
+                    options={
+                      tagOptions.length
+                        ? tagOptions
+                        : [
+                            { label: 'React', value: 'React' },
+                            { label: 'Next.js', value: 'Next.js' },
+                          ]
+                    }
+                    onChange={(e) => {
+                      setTags(e as string[]);
+                    }}
+                  />
+                  <div style={{ marginTop: 12 }}>
+                    {selectedTags.map((tag) => (
+                      <Tag key={tag} color="geekblue">
+                        {tag}
+                      </Tag>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </Flex>
-          </Card>
-        </Col>
-      </Row>
+              </Flex>
+            </Card>
+          </Col>
+        </Row>
+      </fieldset>
     </PageContainer>
   );
 };
