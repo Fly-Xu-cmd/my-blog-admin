@@ -5,6 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  BLOG_API_BASE_URL: ${{ vars.BLOG_API_BASE_URL || 'https://admin.xylxf.xyz' }}
+  BLOG_ADMIN_SITE_URL: ${{ vars.BLOG_ADMIN_SITE_URL || 'https://admin.xylxf.xyz' }}
+  RELEASE_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+
 jobs:
   checks:
     uses: ./.github/workflows/checks.yml
@@ -21,15 +26,13 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: Verify API compatibility readiness
-        env:
-          BLOG_API_COMPAT_READY: ${{ vars.BLOG_API_COMPAT_READY }}
-        run: bash scripts/check-deploy-readiness.sh admin
-
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      - name: Verify live API compatibility automatically
+        run: node scripts/check-api-compatibility.mjs
 
       - name: 安装 pnpm
         run: npm install -g pnpm@12.3.4
@@ -40,12 +43,40 @@ jobs:
       - name: 构建项目
         run: pnpm run build:prod
 
-      - name: 通过 rsync 上传 dist 到服务器
-        uses: burnett01/rsync-deployments@5.2.1
+      - name: Prepare an independent admin release
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          switches: -avzr --delete
-          path: dist
-          remote_path: /home/www/my-blog-admin
-          remote_host: ${{ secrets.ALIYUN_SERVER_IP }}
-          remote_user: root
-          remote_key: ${{ secrets.ALIYUN_SSH_KEY }}
+          host: ${{ secrets.ALIYUN_SERVER_IP }}
+          username: root
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          script: |
+            set -eu
+            umask 022
+            test ! -e '/home/www/my-blog-admin/releases/${{ env.RELEASE_ID }}'
+            mkdir -p '/home/www/my-blog-admin/releases/${{ env.RELEASE_ID }}'
+      - name: Upload candidate static files
+        env:
+          DEPLOY_KEY: ${{ secrets.ALIYUN_SSH_KEY }}
+        run: |
+          set -eu
+          printf '%s\n' "$RELEASE_ID" > dist/deploy-version.txt
+          key_file=$(mktemp)
+          trap 'rm -f "$key_file"' EXIT
+          printf '%s\n' "$DEPLOY_KEY" > "$key_file"
+          chmod 600 "$key_file"
+          rsync -az -e "ssh -i $key_file -o StrictHostKeyChecking=no" dist scripts/deploy-admin.sh scripts/check-admin-health.mjs scripts/check-api-compatibility.mjs \
+            'root@${{ secrets.ALIYUN_SERVER_IP }}:/home/www/my-blog-admin/releases/${{ env.RELEASE_ID }}/'
+      - name: Switch, verify page and assets, roll back on failure
+        env:
+          BLOG_ADMIN_SITE_URL: ${{ env.BLOG_ADMIN_SITE_URL }}
+          BLOG_API_BASE_URL: ${{ env.BLOG_API_BASE_URL }}
+          RELEASE_ID: ${{ env.RELEASE_ID }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ALIYUN_SERVER_IP }}
+          username: root
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          envs: BLOG_ADMIN_SITE_URL,BLOG_API_BASE_URL,RELEASE_ID
+          script: |
+            bash "/home/www/my-blog-admin/releases/$RELEASE_ID/deploy-admin.sh" \
+              /home/www/my-blog-admin "$RELEASE_ID" "$BLOG_ADMIN_SITE_URL" "$BLOG_API_BASE_URL"
