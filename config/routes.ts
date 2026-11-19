@@ -97,6 +97,7 @@ export default [
         path: '/manage/about',
         component: './about-settings',
       },
+      { name: 'site', path: '/manage/site', component: './site-settings' },
     ],
   },
   {
