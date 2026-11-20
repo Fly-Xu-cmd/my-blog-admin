@@ -4,10 +4,26 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import type { UploadProps } from 'antd';
-import { App, Button, Drawer, Form, Input, Select, Switch, Upload } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import {
+  App,
+  Button,
+  Drawer,
+  Empty,
+  Tag,
+  Typography,
+  Form,
+  Input,
+  Select,
+  Space,
+  Switch,
+  Upload,
+} from 'antd';
+import { useEffect, useId, useRef, useState } from 'react';
 import MarkdownEditor from '@/components/MyEditor';
+import PostHistory from '@/components/PostHistory';
 import Preview from '@/components/SafeMarkdown';
+import { useWritingDraft } from '@/components/WritingDraft';
+import WritingGuard from '@/components/WritingGuard';
 import type {
   ContentDetail,
   ContentList,
@@ -16,16 +32,25 @@ import type {
 } from '@/types/content';
 import { api, creationKey, uploadImage } from '@/utils/api';
 
+import styles from './note.module.css';
+
 type Resource = 'posts' | 'notes' | 'dynamics';
 const labels = { posts: '文章', notes: '笔记', dynamics: '动态' };
 export default function ContentManager({ resource }: { resource: Resource }) {
   const { message, modal } = App.useApp();
   const [form] = Form.useForm();
+  const notePreviewTitle = useId();
   const action = useRef<ActionType>(null);
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<ContentDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [editorUploading, setEditorUploading] = useState(false);
+  const coverBusy = useRef(false);
+  const editorBusy = useRef(false);
+  const uploading = coverUploading || editorUploading;
   const [options, setOptions] = useState<{
     categories: any[];
     tags: any[];
@@ -37,10 +62,30 @@ export default function ContentManager({ resource }: { resource: Resource }) {
   });
   const key = useRef<{ key?: string; hash?: string }>({});
   const generation = useRef(0);
+  useEffect(
+    () => () => {
+      generation.current++;
+    },
+    [],
+  );
   const locked = useRef(false);
   const isNote = resource === 'notes';
   const isPost = resource === 'posts';
   const content = Form.useWatch('content', form) || '';
+  const watched = Form.useWatch([], form) || {};
+  const draft = useWritingDraft(
+    open && !loading && isPost ? 'posts:' + (edit?.slug || 'new') : null,
+    { ...watched, revision: edit?.revision },
+    dirty,
+    key,
+    (fields) => {
+      form.setFieldsValue(fields);
+      if (edit && typeof fields.revision === 'number')
+        setEdit({ ...edit, revision: fields.revision });
+      setDirty(true);
+    },
+    saving || uploading,
+  );
   useEffect(() => {
     if (!isPost) return;
     void Promise.all(
@@ -64,6 +109,7 @@ export default function ContentManager({ resource }: { resource: Resource }) {
     setOpen(true);
     setLoading(true);
     setEdit(null);
+    setDirty(false);
     form.resetFields();
     key.current = {};
     try {
@@ -90,11 +136,29 @@ export default function ContentManager({ resource }: { resource: Resource }) {
       if (current === generation.current) setLoading(false);
     }
   };
-  const close = () => {
+  const closeNow = () => {
     generation.current++;
     setOpen(false);
     setEdit(null);
+    setDirty(false);
     form.resetFields();
+  };
+  const close = () => {
+    if (locked.current || coverBusy.current || editorBusy.current) {
+      message.info('正在保存或上传，请稍候');
+      return;
+    }
+    if (dirty)
+      modal.confirm({
+        title: '关闭编辑器？',
+        content: isPost
+          ? '未提交内容保留在本浏览器草稿中，请确认草稿保存提示。'
+          : '尚未提交的修改将丢失。',
+        okText: '关闭',
+        cancelText: '继续编辑',
+        onOk: closeNow,
+      });
+    else closeNow();
   };
   const create = () => {
     generation.current++;
@@ -102,15 +166,17 @@ export default function ContentManager({ resource }: { resource: Resource }) {
     form.setFieldsValue({ published: false, content: '', tags: [] });
     key.current = {};
     setEdit(null);
+    setDirty(false);
     setLoading(false);
     setOpen(true);
   };
   const save = async () => {
-    if (loading || locked.current) return;
+    if (loading || locked.current || coverBusy.current || editorBusy.current)
+      return;
+    locked.current = true;
+    setSaving(true);
     try {
       const values = await form.validateFields();
-      locked.current = true;
-      setSaving(true);
       const payload = isNote
         ? { published: values.published, kind: values.kind }
         : isPost
@@ -125,6 +191,7 @@ export default function ContentManager({ resource }: { resource: Resource }) {
               seriesId: values.seriesId ?? null,
               seriesOrder: values.seriesId ? Number(values.seriesOrder) : null,
               ...(!edit && values.slug ? { slug: values.slug } : {}),
+              ...(edit ? { revision: edit.revision } : {}),
             }
           : {
               title: values.title,
@@ -132,6 +199,11 @@ export default function ContentManager({ resource }: { resource: Resource }) {
               excerpt: values.excerpt,
               published: values.published,
             };
+      const headers: Record<string, string> =
+        !edit && isPost
+          ? { 'Idempotency-Key': creationKey(key.current, payload) }
+          : {};
+      draft.persist();
       await api(
         '/api/' +
           resource +
@@ -139,14 +211,12 @@ export default function ContentManager({ resource }: { resource: Resource }) {
         {
           method: edit ? 'PUT' : 'POST',
           body: JSON.stringify(payload),
-          headers:
-            !edit && isPost
-              ? { 'Idempotency-Key': creationKey(key.current, payload) }
-              : {},
+          headers,
         },
       );
       key.current = {};
-      close();
+      draft.clear();
+      closeNow();
       action.current?.reload();
       message.success('保存成功');
     } catch (e: any) {
@@ -171,18 +241,35 @@ export default function ContentManager({ resource }: { resource: Resource }) {
     showUploadList: false,
     accept: '.jpg,.jpeg,.png,.gif,.webp',
     customRequest: async (opts) => {
+      if (locked.current || coverBusy.current) {
+        opts.onError?.(new Error('请等待当前操作完成'));
+        return;
+      }
+      const current = generation.current;
+      coverBusy.current = true;
+      setCoverUploading(true);
       try {
         const url = await uploadImage(opts.file as File);
+        if (current !== generation.current) return;
         form.setFieldValue('cover', url);
+        setDirty(true);
         opts.onSuccess?.({ url });
       } catch (e: any) {
         opts.onError?.(e);
         message.error(e.message);
+      } finally {
+        coverBusy.current = false;
+        if (current === generation.current) setCoverUploading(false);
       }
     },
   };
   return (
     <PageContainer title={labels[resource] + '管理'}>
+      <WritingGuard
+        dirty={open && dirty}
+        busy={saving || uploading}
+        localDraft={isPost}
+      />
       <ProTable<ContentSummary>
         actionRef={action}
         rowKey="id"
@@ -277,41 +364,71 @@ export default function ContentManager({ resource }: { resource: Resource }) {
         }}
       />
       <Drawer
-        title={(edit ? '编辑' : '新增') + labels[resource]}
+        title={isNote ? '笔记预览与设置' : (edit ? '编辑' : '新增') + labels[resource]}
         open={open}
         onClose={close}
-        width="80%"
+        width={isNote ? "min(960px, 100vw)" : "80%"}
         destroyOnClose
         extra={
-          <Button
-            type="primary"
-            disabled={loading}
-            loading={saving}
-            onClick={save}
-          >
-            保存
-          </Button>
+          <Space>
+            {isPost && edit?.slug && (
+              <PostHistory
+                slug={edit.slug}
+                disabled={loading || saving || uploading}
+                onRestore={(fields) => {
+                  form.setFieldsValue(fields);
+                  setDirty(true);
+                }}
+              />
+            )}
+            <Button
+              type="primary"
+              disabled={loading || uploading}
+              loading={saving}
+              onClick={save}
+            >
+              保存
+            </Button>
+          </Space>
         }
       >
         {loading ? (
           <p>正在读取完整内容…</p>
         ) : (
-          <Form name={'content-' + resource} form={form} layout="vertical">
+          <Form
+            name={'content-' + resource}
+            form={form}
+            layout="vertical"
+            disabled={saving}
+            onValuesChange={() => setDirty(true)}
+          >
+            {isPost && draft.notice}
             {isNote ? (
-              <>
-                <p>
-                  正文、分类和标签请在本地修改后同步。发布状态与类型由后台保留。
-                </p>
-                <Form.Item name="kind" label="类型">
-                  <Select
-                    options={[
+              <div className={styles.workspace}>
+                <section className={styles.preview} aria-labelledby={notePreviewTitle}>
+                  <Typography.Text type="secondary">正文预览 · 只读</Typography.Text>
+                  <Typography.Title id={notePreviewTitle} level={3} style={{ marginTop: 8 }}>
+                    {edit?.title || '未命名笔记'}
+                  </Typography.Title>
+                  {edit?.content ? <Preview source={edit.content} /> : <Empty description="暂无正文" />}
+                </section>
+                <aside className={styles.settings} aria-label="发布设置">
+                  <Typography.Title level={5}>发布设置</Typography.Title>
+                  <Form.Item name="kind" label="笔记类型">
+                    <Select options={[
                       { value: 'TECH', label: '技术笔记' },
                       { value: 'ESSAY', label: '随笔' },
-                    ]}
-                  />
-                </Form.Item>
-                <Preview source={edit?.content || ''} skipHtml={false} />
-              </>
+                    ]} />
+                  </Form.Item>
+                  <Form.Item name="published" label="公开发布" valuePropName="checked" style={{ marginBottom: 8 }}>
+                    <Switch aria-label="公开发布" />
+                  </Form.Item>
+                  <Tag>{watched.published ? '公开可见' : '仅后台可见'}</Tag>
+                  <Typography.Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+                    在本地修改正文、分类和标签后再同步。后台只保存类型和发布状态。
+                  </Typography.Paragraph>
+                </aside>
+              </div>
             ) : (
               <>
                 <Form.Item
@@ -344,10 +461,16 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                   rules={[{ required: true }]}
                 >
                   <MarkdownEditor
+                    disabled={saving}
+                    onUploadingChange={(active) => {
+                      editorBusy.current = active;
+                      setEditorUploading(active);
+                    }}
                     value={content}
-                    onChange={(v: string | undefined) =>
-                      form.setFieldValue('content', v)
-                    }
+                    onChange={(v: string | undefined) => {
+                      form.setFieldValue('content', v);
+                      setDirty(true);
+                    }}
                   />
                 </Form.Item>
                 {isPost && (
@@ -385,20 +508,20 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                     <Form.Item name="cover" label="封面 URL">
                       <Input />
                     </Form.Item>
-                    <Upload {...upload}>
+                    <Upload {...upload} disabled={saving || uploading}>
                       <Button>上传封面</Button>
                     </Upload>
                   </>
                 )}
               </>
             )}
-            <Form.Item
+            {!isNote && <Form.Item
               name="published"
               label="公开发布"
               valuePropName="checked"
             >
               <Switch />
-            </Form.Item>
+            </Form.Item>}
           </Form>
         )}
       </Drawer>

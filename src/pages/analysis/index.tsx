@@ -1,10 +1,11 @@
 import { Line } from '@ant-design/charts';
 import { PageContainer } from '@ant-design/pro-components';
 import {
+  Alert,
   Button,
   Card,
   Col,
-  Result,
+  Empty,
   Row,
   Segmented,
   Space,
@@ -12,212 +13,254 @@ import {
   Table,
   Typography,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import React, { useEffect, useState } from 'react';
-import type { AnalyticsStats } from '@/services/nextjs';
-import { getAnalyticsStats } from '@/services/nextjs';
-
-/** 统计时间范围类型：近 7 天 / 近 30 天 */
-type AnalyticsRange = '7d' | '30d';
-
-/** 页面错误状态：401 未登录 / 403 无权限 / error 其他错误 */
-type ErrorStatus = '401' | '403' | 'error';
-
-/** 热门页面表格的列配置（路径可复制、访问量） */
-const topPageColumns: ColumnsType<{ path: string; count: number }> = [
-  {
-    title: '路径',
-    dataIndex: 'path',
-    key: 'path',
-    render: (text: string) => <Typography.Text copyable={{ text }}>{text}</Typography.Text>,
-  },
-  {
-    title: '访问量',
-    dataIndex: 'count',
-    key: 'count',
-    width: 100,
-  },
-];
-
-/** 来源统计表格的列配置（来源 hostname、次数） */
-const referrerColumns: ColumnsType<{ host: string; count: number }> = [
-  {
-    title: '来源',
-    dataIndex: 'host',
-    key: 'host',
-  },
-  {
-    title: '次数',
-    dataIndex: 'count',
-    key: 'count',
-    width: 100,
-  },
-];
-
-/**
- * 数据分析看板页面
- * 展示今日 PV/UV 统计卡片、访问趋势折线图、热门页面 Top10 与访问来源统计
- */
-const Analysis: React.FC = () => {
-  const [range, setRange] = useState<AnalyticsRange>('7d');
-  const [stats, setStats] = useState<AnalyticsStats | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<ErrorStatus | null>(null);
-
-  /**
-   * 拉取统计数据并更新页面状态
-   * @param currentRange 当前时间范围（'7d' / '30d'）
-   */
-  const fetchData = async (currentRange: AnalyticsRange) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getAnalyticsStats(currentRange);
-      setStats(res);
-    } catch (err: any) {
-      const status = err?.response?.status;
-      if (status === 401) {
-        setError('401');
-      } else if (status === 403) {
-        setError('403');
-      } else {
-        setError('error');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 切换时间范围时重新拉取数据
+import { useEffect, useState } from 'react';
+import { getAnalyticsStats, type AnalyticsStats } from '@/services/nextjs';
+import ReportDateRange, { recentDates } from '@/components/ReportDateRange';
+const eventNames: Record<string, string> = {
+  search: '搜索请求',
+  search_empty: '无结果搜索',
+  search_click: '搜索结果点击',
+  featured_click: '主推文章点击',
+  start_click: '入门文章点击',
+  series_click: '推荐系列点击',
+  subscribe_click: '订阅入口点击',
+};
+export default function Analysis() {
+  const [dates, setDates] = useState(() => recentDates(7)),
+    [kind, setKind] = useState('all'),
+    [data, setData] = useState<AnalyticsStats | null>(null),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(''),
+    [reload, setReload] = useState(0);
   useEffect(() => {
-    fetchData(range);
-  }, [range]);
-
-  // 趋势图数据：将 pv / uv 拍平为双线数据，系列名使用中文便于 tooltip 展示
-  const trendData =
-    stats?.trend?.flatMap((item) => [
-      { date: item.date, value: item.pv, type: '访问量（PV）' },
-      { date: item.date, value: item.uv, type: '独立访客（UV）' },
+    const controller = new AbortController();
+    setLoading(true);
+    setError('');
+    void getAnalyticsStats(dates, kind, controller.signal)
+      .then((next) => {
+        if (!controller.signal.aborted) setData(next);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(e.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [dates, kind, reload]);
+  const eventRows = Object.entries(eventNames).map(([event, name]) => ({
+    event,
+    name,
+    count: data?.interactions[event] ?? 0,
+  }));
+  const noResults = data?.interactions.search
+    ? Math.round(
+        ((data.interactions.search_empty ?? 0) / data.interactions.search) *
+          1000,
+      ) / 10
+    : null;
+  const trend =
+    data?.trend.flatMap((row) => [
+      { date: row.date, count: row.pv, type: '访问量（PV）' },
+      { date: row.date, count: row.uv, type: '独立访客（UV）' },
     ]) ?? [];
-
-  // 趋势图配置（参考 Welcome 页的 Line 配置写法）
-  const lineConfig = {
-    data: trendData,
-    title: '访问趋势',
-    xField: 'date',
-    yField: 'value',
-    point: {
-      shapeField: 'square',
-      sizeField: 4,
-    },
-    interaction: {
-      tooltip: {
-        marker: false,
-      },
-    },
-    style: {
-      lineWidth: 2,
-    },
-    colorField: 'type',
-  };
-
-  // 热门页面 Top10 数据
-  const topPages = stats?.topPages?.slice(0, 10) ?? [];
-  // 访问来源统计数据
-  const referrers = stats?.referrers ?? [];
-
-  // 请求失败时展示错误提示（401/403/其他），保证页面不白屏
-  if (error) {
-    return (
-      <PageContainer title="数据分析">
-        <Card>
-          <Result
-            status={error === '403' ? '403' : error === '401' ? 'warning' : 'error'}
-            title={
-              error === '401'
-                ? '未登录或登录已过期'
-                : error === '403'
-                  ? '无权限访问'
-                  : '数据加载失败'
-            }
-            subTitle={
-              error === '401'
-                ? '请重新登录后再查看数据分析看板（错误码 401）'
-                : error === '403'
-                  ? '该页面仅管理员可见（错误码 403）'
-                  : '请稍后重试，或检查网络后重试'
-            }
-            extra={
-              <Button type="primary" onClick={() => fetchData(range)}>
-                重试
-              </Button>
-            }
-          />
-        </Card>
-      </PageContainer>
-    );
-  }
-
+  const failed = !!error;
   return (
-    <PageContainer title="数据分析">
+    <PageContainer
+      title="数据分析"
+      subTitle="了解读者从哪里来、看了什么，以及阅读入口是否有效"
+      extra={
+        <Space wrap>
+          <ReportDateRange value={dates} onChange={setDates} />
+          <Button onClick={() => setReload((n) => n + 1)} loading={loading}>
+            刷新
+          </Button>
+        </Space>
+      }
+    >
+      {failed && (
+        <Alert
+          type="error"
+          showIcon
+          message="数据读取失败"
+          description={error}
+          style={{ marginBottom: 20 }}
+        />
+      )}
       <Space direction="vertical" size={24} style={{ width: '100%' }}>
-        {/* 顶部：今日 PV / UV 统计卡片与时间范围切换 */}
-        <Row gutter={[24, 24]} align="middle">
-          <Col xs={24} sm={12} md={6}>
-            <Card loading={loading}>
-              <Statistic title="今日访问量（PV）" value={stats?.today?.pv ?? 0} />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card loading={loading}>
-              <Statistic title="今日独立访客（UV）" value={stats?.today?.uv ?? 0} />
-            </Card>
-          </Col>
-          <Col xs={24} md={12} style={{ textAlign: 'right' }}>
-            <Segmented
-              value={range}
-              options={[
-                { label: '近 7 天', value: '7d' },
-                { label: '近 30 天', value: '30d' },
-              ]}
-              onChange={(value) => setRange(value as AnalyticsRange)}
+        <Typography.Text type="secondary">
+          {data
+            ? '当前展示 ' +
+              new Date(data.start).toLocaleDateString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+              }) +
+              ' 至 ' +
+              new Date(Date.parse(data.end) - 1).toLocaleDateString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+              })
+            : '正在读取统计范围'}{' '}
+          · UV 按浏览器标识估算，不代表真实人数。
+        </Typography.Text>
+        <Row gutter={[16, 16]}>
+          {[
+            { title: '今日访问量（PV）', value: data?.today.pv },
+            { title: '今日独立访客（UV）', value: data?.today.uv },
+            { title: '范围内访问量（PV）', value: data?.period.pv },
+            { title: '范围内独立访客（UV）', value: data?.period.uv },
+          ].map((row) => (
+            <Col xs={12} lg={6} key={row.title}>
+              <Card loading={loading}>
+                <Statistic title={row.title} value={row.value ?? 0} />
+              </Card>
+            </Col>
+          ))}
+        </Row>
+        <Card title="访问趋势">
+          {trend.length ? (
+            <Line
+              height={280}
+              data={trend}
+              xField="date"
+              yField="count"
+              colorField="type"
             />
-          </Col>
-        </Row>
-        {/* 访问趋势折线图（x 轴日期，PV / UV 双线） */}
-        <Card>
-          <Line {...lineConfig} />
+          ) : (
+            <Empty description="暂无访问数据" />
+          )}
         </Card>
-        {/* 热门页面 Top10 与访问来源统计 */}
         <Row gutter={[24, 24]}>
-          <Col xs={24} lg={12}>
-            <Card title="热门页面 Top10">
+          <Col xs={24} lg={15}>
+            <Card
+              title="热门页面"
+              extra={
+                <Segmented
+                  size="small"
+                  value={kind}
+                  onChange={setKind}
+                  options={[
+                    { label: '全部', value: 'all' },
+                    { label: '文章', value: 'post' },
+                    { label: '技术笔记', value: 'TECH' },
+                    { label: '随笔', value: 'ESSAY' },
+                  ]}
+                />
+              }
+            >
               <Table
                 size="small"
-                rowKey="path"
                 loading={loading}
+                rowKey="path"
                 pagination={false}
-                columns={topPageColumns}
-                dataSource={topPages}
+                dataSource={data?.topPages ?? []}
+                columns={[
+                  {
+                    title: '页面',
+                    render: (_, row) => (
+                      <div>
+                        {row.url ? (
+                          <a
+                            href={row.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {row.title} ↗
+                          </a>
+                        ) : (
+                          <Typography.Text>
+                            {row.title}（未公开）
+                          </Typography.Text>
+                        )}
+                        <Typography.Paragraph
+                          type="secondary"
+                          style={{ margin: '4px 0 0', fontSize: 12 }}
+                        >
+                          {row.kind} · {row.path}
+                        </Typography.Paragraph>
+                      </div>
+                    ),
+                  },
+                  { title: '访问量', dataIndex: 'count', width: 90 },
+                ]}
               />
             </Card>
           </Col>
-          <Col xs={24} lg={12}>
-            <Card title="访问来源统计">
+          <Col xs={24} lg={9}>
+            <Card title="访问来源">
               <Table
                 size="small"
-                rowKey="host"
                 loading={loading}
+                rowKey="host"
                 pagination={false}
-                columns={referrerColumns}
-                dataSource={referrers}
+                dataSource={data?.referrers ?? []}
+                columns={[
+                  { title: '来源域名', dataIndex: 'host' },
+                  { title: '次数', dataIndex: 'count', width: 80 },
+                ]}
               />
+              <Typography.Text type="secondary">
+                浏览器未提供来源的访问不出现在此表；来源无法完整反映所有转发渠道。
+              </Typography.Text>
             </Card>
           </Col>
         </Row>
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={15}>
+            <Card title="搜索与阅读入口">
+              <Typography.Paragraph type="secondary">
+                按日汇总点击事件，不保存搜索词或读者操作明细；只从本次上线后开始积累。订阅入口点击不等于订阅成功。
+              </Typography.Paragraph>
+              <Statistic
+                title="无结果搜索比例"
+                value={noResults ?? '—'}
+                suffix={noResults === null ? '' : '%'}
+              />
+              <Table
+                size="small"
+                rowKey="event"
+                pagination={false}
+                dataSource={eventRows}
+                columns={[
+                  { title: '行为', dataIndex: 'name' },
+                  { title: '次数', dataIndex: 'count', width: 90 },
+                ]}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} lg={9}>
+            <Card title="本范围收到的反馈">
+              <Table
+                size="small"
+                rowKey="status"
+                pagination={false}
+                dataSource={data?.feedback ?? []}
+                columns={[
+                  {
+                    title: '当前状态',
+                    dataIndex: 'status',
+                    render: (status) =>
+                      ({
+                        NEW: '待处理',
+                        RESOLVED: '已处理',
+                        IGNORED: '已忽略',
+                      })[status as 'NEW'] ?? status,
+                  },
+                  { title: '数量', dataIndex: 'count', width: 80 },
+                ]}
+              />
+              <a href="/manage/feedback">前往处理反馈 →</a>
+            </Card>
+          </Col>
+        </Row>
+        <Typography.Text type="secondary">
+          范围内 UV 整段时间去重，不能由每日 UV 相加。数据最多缓存 60 秒
+          {data?.updatedAt
+            ? ' · 更新于 ' +
+              new Date(data.updatedAt).toLocaleString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+              })
+            : ''}
+        </Typography.Text>
       </Space>
     </PageContainer>
   );
-};
-
-export default Analysis;
+}

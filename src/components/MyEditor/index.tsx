@@ -1,5 +1,5 @@
 import MDEditor, { commands } from '@uiw/react-md-editor';
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { uploadImage as uploadAuthenticatedImage } from '@/utils/api';
@@ -10,10 +10,22 @@ export default function MarkdownEditor(props: {
   height?: number;
   baseUrl?: string;
   id?: string;
+  disabled?: boolean;
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const { value: initialValue, onChange, height = 420, id } = props;
 
   const uploadImageTitleId = useId();
+  const disabled = useRef(props.disabled);
+  disabled.current = props.disabled;
+  const mounted = useRef(true);
+  const uploading = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const uploadImage = async (file: File) => {
     try {
@@ -45,14 +57,21 @@ export default function MarkdownEditor(props: {
       </svg>
     ),
     execute: async (_state: any, api: any) => {
+      if (disabled.current || uploading.current) return;
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
       input.onchange = async () => {
         const file = input.files?.[0];
         if (!file) return;
-
+        if (disabled.current || !mounted.current || uploading.current) return;
+        uploading.current = true;
+        props.onUploadingChange?.(true);
         const url = await uploadImage(file);
+        uploading.current = false;
+        if (!mounted.current) return;
+        props.onUploadingChange?.(false);
+        if (disabled.current) return;
         if (url) {
           api.replaceSelection(`![image](${url})\n`);
         } else {
@@ -68,7 +87,10 @@ export default function MarkdownEditor(props: {
       <MDEditor
         id={id}
         value={initialValue}
-        onChange={(value) => onChange?.(value ?? '')}
+        onChange={(value) => {
+          if (!disabled.current) onChange?.(value ?? '');
+        }}
+        textareaProps={{ readOnly: props.disabled }}
         height={height}
         preview="live"
         previewOptions={{
@@ -78,7 +100,11 @@ export default function MarkdownEditor(props: {
           // UIW reverses skipHtml and adds rehypeRaw internally. Remove the entire HTML plugin chain.
           pluginsFilter: (type, plugins) => (type === 'rehype' ? [] : plugins),
         }}
-        commands={[...commands.getCommands(), commands.divider, uploadCommand]}
+        commands={
+          props.disabled
+            ? []
+            : [...commands.getCommands(), commands.divider, uploadCommand]
+        }
       />
     </div>
   );

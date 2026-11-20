@@ -15,8 +15,17 @@ export type ContentSummary = {
   seriesId?: number | null;
   seriesOrder?: number | null;
 };
-export type ContentDetail = ContentSummary & { content: string; syncId?: string };
-export type Envelope<T> = { ok: boolean; data: T; error?: string; code?: string };
+export type ContentDetail = ContentSummary & {
+  content: string;
+  syncId?: string;
+  revision?: number;
+};
+export type Envelope<T> = {
+  ok: boolean;
+  data: T;
+  error?: string;
+  code?: string;
+};
 export type ContentList = Envelope<ContentSummary[]> & {
   total: number;
   current: number;
