@@ -90,7 +90,6 @@ export default function Welcome() {
       subTitle="内容发布、待处理事项与首页配置"
       extra={
         <Space wrap>
-          <ReportDateRange value={dates} onChange={setDates} />
           <Button onClick={() => setReload((n) => n + 1)} loading={loading}>
             刷新总览
           </Button>
@@ -108,8 +107,7 @@ export default function Welcome() {
       )}
       <Space direction="vertical" size={24} style={{ width: '100%' }}>
         <Typography.Text type="secondary">
-          全站数量与待处理事项为当前累计；日期筛选仅影响内容趋势。
-          {data ? `趋势范围：${data.startDate} 至 ${data.endDate}` : ''}
+          全站数量与待处理事项为当前累计。
         </Typography.Text>
         <Row gutter={[16, 16]}>
           {(['post', 'TECH', 'ESSAY', 'dynamic'] as const).map((kind) => {
@@ -232,52 +230,60 @@ export default function Welcome() {
             </Card>
           </Col>
         </Row>
-        <Row gutter={[24, 24]}>
-          <Col xs={24} lg={16}>
-            <Card
-              title="内容趋势"
-              extra={
-                <Segmented
-                  value={timeline}
-                  onChange={setTimeline}
-                  options={[
-                    { label: '首次发布', value: 'published' },
-                    { label: '创建内容', value: 'created' },
-                  ]}
-                />
-              }
-            >
-              <Typography.Paragraph type="secondary">
-                创建包含草稿和同步笔记；首次发布按首次发布时间统计，隐藏或再次发布不会重复计数。
-              </Typography.Paragraph>
-              {trend.length ? (
-                <Line
-                  height={260}
-                  data={trend}
-                  xField="date"
-                  yField="count"
-                  colorField="type"
-                />
-              ) : (
-                <Empty description="这段时间暂无内容变化" />
-              )}
-            </Card>
-          </Col>
-          <Col xs={24} lg={8}>
-            <Card title="公开文章分类">
-              {data?.categories.length ? (
-                <Pie
-                  height={260}
-                  data={data.categories}
-                  angleField="count"
-                  colorField="name"
-                />
-              ) : (
-                <Empty description="暂无公开文章" />
-              )}
-            </Card>
-          </Col>
-        </Row>
+        <section aria-label="内容数据">
+          <Typography.Title level={4}>内容数据</Typography.Title>
+          <ReportDateRange value={dates} onChange={setDates} />
+          <Typography.Paragraph type="secondary" style={{ marginTop: 8 }}>
+            {data ? `趋势范围：${data.startDate} 至 ${data.endDate} · ` : ''}
+            日期只影响趋势；文章分类按当前公开内容统计。
+          </Typography.Paragraph>
+          <Row gutter={[24, 24]}>
+            <Col xs={24} lg={16}>
+              <Card
+                title="内容趋势"
+                extra={
+                  <Segmented
+                    value={timeline}
+                    onChange={setTimeline}
+                    options={[
+                      { label: '首次发布', value: 'published' },
+                      { label: '创建内容', value: 'created' },
+                    ]}
+                  />
+                }
+              >
+                <Typography.Paragraph type="secondary">
+                  创建包含草稿和同步笔记；首次发布按首次发布时间统计，隐藏或再次发布不会重复计数。
+                </Typography.Paragraph>
+                {trend.length ? (
+                  <Line
+                    height={260}
+                    data={trend}
+                    xField="date"
+                    yField="count"
+                    colorField="type"
+                  />
+                ) : (
+                  <Empty description="这段时间暂无内容变化" />
+                )}
+              </Card>
+            </Col>
+            <Col xs={24} lg={8}>
+              <Card title="公开文章分类">
+                {data?.categories.length ? (
+                  <Pie
+                    height={260}
+                    data={data.categories}
+                    angleField="count"
+                    colorField="name"
+                  />
+                ) : (
+                  <Empty description="暂无公开文章" />
+                )}
+              </Card>
+            </Col>
+          </Row>
+        </section>
         <Typography.Text type="secondary">
           数据最多缓存 60 秒
           {data?.updatedAt

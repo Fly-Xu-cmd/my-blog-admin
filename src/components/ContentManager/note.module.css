@@ -1,0 +1,22 @@
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 224px;
+  align-items: start;
+  gap: 24px 32px;
+}
+.preview {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.preview img { max-width: 100%; height: auto; }
+.preview pre, .preview table { max-width: 100%; overflow-x: auto; }
+.preview table { display: block; }
+.settings {
+  padding: 16px;
+  border: 1px solid rgba(127, 127, 127, 0.2);
+  border-radius: 8px;
+}
+@media (max-width: 640px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .settings { grid-row: 1; }
+}

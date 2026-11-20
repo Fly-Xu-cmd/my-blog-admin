@@ -8,6 +8,9 @@ import {
   App,
   Button,
   Drawer,
+  Empty,
+  Tag,
+  Typography,
   Form,
   Input,
   Select,
@@ -15,7 +18,7 @@ import {
   Switch,
   Upload,
 } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import MarkdownEditor from '@/components/MyEditor';
 import PostHistory from '@/components/PostHistory';
 import Preview from '@/components/SafeMarkdown';
@@ -29,11 +32,14 @@ import type {
 } from '@/types/content';
 import { api, creationKey, uploadImage } from '@/utils/api';
 
+import styles from './note.module.css';
+
 type Resource = 'posts' | 'notes' | 'dynamics';
 const labels = { posts: '文章', notes: '笔记', dynamics: '动态' };
 export default function ContentManager({ resource }: { resource: Resource }) {
   const { message, modal } = App.useApp();
   const [form] = Form.useForm();
+  const notePreviewTitle = useId();
   const action = useRef<ActionType>(null);
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<ContentDetail | null>(null);
@@ -358,10 +364,10 @@ export default function ContentManager({ resource }: { resource: Resource }) {
         }}
       />
       <Drawer
-        title={(edit ? '编辑' : '新增') + labels[resource]}
+        title={isNote ? '笔记预览与设置' : (edit ? '编辑' : '新增') + labels[resource]}
         open={open}
         onClose={close}
-        width="80%"
+        width={isNote ? "min(960px, 100vw)" : "80%"}
         destroyOnClose
         extra={
           <Space>
@@ -398,20 +404,31 @@ export default function ContentManager({ resource }: { resource: Resource }) {
           >
             {isPost && draft.notice}
             {isNote ? (
-              <>
-                <p>
-                  正文、分类和标签请在本地修改后同步。发布状态与类型由后台保留。
-                </p>
-                <Form.Item name="kind" label="类型">
-                  <Select
-                    options={[
+              <div className={styles.workspace}>
+                <section className={styles.preview} aria-labelledby={notePreviewTitle}>
+                  <Typography.Text type="secondary">正文预览 · 只读</Typography.Text>
+                  <Typography.Title id={notePreviewTitle} level={3} style={{ marginTop: 8 }}>
+                    {edit?.title || '未命名笔记'}
+                  </Typography.Title>
+                  {edit?.content ? <Preview source={edit.content} /> : <Empty description="暂无正文" />}
+                </section>
+                <aside className={styles.settings} aria-label="发布设置">
+                  <Typography.Title level={5}>发布设置</Typography.Title>
+                  <Form.Item name="kind" label="笔记类型">
+                    <Select options={[
                       { value: 'TECH', label: '技术笔记' },
                       { value: 'ESSAY', label: '随笔' },
-                    ]}
-                  />
-                </Form.Item>
-                <Preview source={edit?.content || ''} skipHtml={false} />
-              </>
+                    ]} />
+                  </Form.Item>
+                  <Form.Item name="published" label="公开发布" valuePropName="checked" style={{ marginBottom: 8 }}>
+                    <Switch aria-label="公开发布" />
+                  </Form.Item>
+                  <Tag>{watched.published ? '公开可见' : '仅后台可见'}</Tag>
+                  <Typography.Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+                    在本地修改正文、分类和标签后再同步。后台只保存类型和发布状态。
+                  </Typography.Paragraph>
+                </aside>
+              </div>
             ) : (
               <>
                 <Form.Item
@@ -498,13 +515,13 @@ export default function ContentManager({ resource }: { resource: Resource }) {
                 )}
               </>
             )}
-            <Form.Item
+            {!isNote && <Form.Item
               name="published"
               label="公开发布"
               valuePropName="checked"
             >
               <Switch />
-            </Form.Item>
+            </Form.Item>}
           </Form>
         )}
       </Drawer>
