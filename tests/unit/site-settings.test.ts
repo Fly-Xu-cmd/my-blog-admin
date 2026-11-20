@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
   waitFor,
 } from '@testing-library/react';
 import { history } from '@umijs/max';
@@ -86,6 +87,28 @@ beforeEach(() => {
   history.location.pathname = '/manage/site';
 });
 afterEach(cleanup);
+
+test('preview maps focused fields to their actual frontend regions without saving', async () => {
+  mount();
+  await waitFor(() =>
+    expect((screen.getByLabelText('站点名称') as HTMLInputElement).value).toBe(
+      config.name,
+    ),
+  );
+  const title = screen.getByLabelText('首页标题');
+  fireEvent.focus(title);
+  fireEvent.change(title, { target: { value: '未保存的首页标题' } });
+  const panel = await screen.findByRole('region', { name: '前台位置预览画布' });
+  expect(
+    within(panel).getByRole('heading', { name: '未保存的首页标题' }),
+  ).toBeTruthy();
+  expect(within(panel).queryByText(config.description)).toBeNull();
+  const description = screen.getByLabelText('站点简介');
+  fireEvent.focus(description);
+  const seo = await screen.findByRole('region', { name: '前台位置预览画布' });
+  expect(within(seo).getByText(config.description)).toBeTruthy();
+  expect(request).toHaveBeenCalledTimes(1);
+});
 
 test('initial read failure disables saving and retry loads the actual saved version', async () => {
   request

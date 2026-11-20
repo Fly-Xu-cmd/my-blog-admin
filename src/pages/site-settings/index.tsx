@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api, RequestError, uploadImage } from '@/utils/api';
+import SitePreview from './SitePreview';
 
 const keys = [
   'name',
@@ -31,7 +32,11 @@ const keys = [
   'qqQr',
 ] as const;
 type Fields = Record<(typeof keys)[number], string>;
-type Config = Fields & { revision: number; updatedAt: string | null };
+type Config = Fields & {
+  revision: number;
+  updatedAt: string | null;
+  publicOrigin?: string;
+};
 const fieldsOf = (value: Fields): Fields =>
   Object.fromEntries(keys.map((key) => [key, value[key]])) as Fields;
 
@@ -46,6 +51,7 @@ export default function SiteSettings() {
   const [error, setError] = useState('');
   const [saveError, setSaveError] = useState('');
   const [loadKey, setLoadKey] = useState(0);
+  const [focused, setFocused] = useState('');
   const dirtyRef = useRef(false);
   const busy = useRef(false);
   const confirming = useRef(false);
@@ -281,6 +287,12 @@ export default function SiteSettings() {
         layout="vertical"
         disabled={loading || saving || uploading || !!error || !config}
         onFinish={save}
+        onFocusCapture={(event) => {
+          if (event.target instanceof HTMLInputElement) {
+            const key = event.target.id;
+            if (keys.includes(key as (typeof keys)[number])) setFocused(key);
+          }
+        }}
         onValuesChange={(_, current) => {
           const changed =
             !!config &&
@@ -324,24 +336,13 @@ export default function SiteSettings() {
               </Space>
             </Col>
             <Col xs={24} lg={9}>
-              <Card title="文案预览">
-                <Typography.Text type="secondary">
-                  {values?.name}
-                </Typography.Text>
-                <Typography.Paragraph>
-                  你好，我是{values?.author}
-                </Typography.Paragraph>
-                <Typography.Title level={3}>
-                  {values?.homeTitle}
-                </Typography.Title>
-                <Typography.Paragraph>{values?.homeIntro}</Typography.Paragraph>
-                <Typography.Paragraph type="secondary">
-                  {values?.description}
-                </Typography.Paragraph>
-                <Typography.Text type="secondary">
-                  图片在前台预览中确认；此处不会自动加载未保存的外部地址。
-                </Typography.Text>
-              </Card>
+              <SitePreview
+                values={values || {}}
+                origin={config?.publicOrigin || location.origin}
+                focused={focused}
+                dirty={dirty}
+                onSelect={() => setFocused('')}
+              />
             </Col>
           </Row>
         </Spin>

@@ -24,6 +24,7 @@ export default [
   },
   {
     path: '/welcome',
+    access: 'canAdmin',
     name: 'welcome',
     icon: 'smile',
     component: './Welcome',
@@ -109,6 +110,12 @@ export default [
   {
     path: '/',
     redirect: '/welcome',
+  },
+  {
+    path: '/manage/content-preview',
+    component: './content-preview',
+    access: 'canAdmin',
+    hideInMenu: true,
   },
   {
     path: '*',

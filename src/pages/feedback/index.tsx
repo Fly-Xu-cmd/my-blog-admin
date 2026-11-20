@@ -25,6 +25,12 @@ type Feedback = {
   contact: string | null;
   status: string;
   createdAt: string;
+  source: {
+    title: string;
+    slug: string;
+    published: boolean;
+    url: string | null;
+  } | null;
 };
 type Settings = { githubUrl: string; revision: number };
 export default function FeedbackPage() {
@@ -261,12 +267,33 @@ export default function FeedbackPage() {
           {
             title: '来源',
             dataIndex: 'resource',
-            width: 130,
-            render: (_, row) => (
-              <span>
-                {row.resource === 'post' ? '文章' : '笔记'} #{row.contentId}
-              </span>
-            ),
+            width: 230,
+            render: (_, row) =>
+              row.source ? (
+                <div>
+                  <Tag>{row.resource === 'post' ? '文章' : '笔记'}</Tag>
+                  <a
+                    href={
+                      row.source.url ??
+                      '/manage/content-preview?kind=' +
+                        row.resource +
+                        '&slug=' +
+                        encodeURIComponent(row.source.slug)
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {row.source.title} ↗
+                  </a>
+                  {!row.source.published && (
+                    <Typography.Text type="secondary">
+                      （后台预览）
+                    </Typography.Text>
+                  )}
+                </div>
+              ) : (
+                <Typography.Text type="secondary">原内容已删除</Typography.Text>
+              ),
           },
           {
             title: '反馈',
