@@ -1,4 +1,6 @@
 export default {
+  'menu.manage.reading-entry': '首页阅读入口',
+  'menu.manage.feedback': '私有反馈',
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',
   'menu.home': '首页',
@@ -56,6 +58,7 @@ export default {
   'menu.manage': '管理',
   'menu.manage.post': '文章管理',
   'menu.manage.about': '关于页设置',
+  'menu.manage.site': '站点配置',
   'menu.manage.dynamic': '动态管理',
   'menu.analysis': '数据分析',
 };

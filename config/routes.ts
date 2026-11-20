@@ -97,6 +97,13 @@ export default [
         path: '/manage/about',
         component: './about-settings',
       },
+      { name: 'site', path: '/manage/site', component: './site-settings' },
+      {
+        name: 'reading-entry',
+        path: '/manage/reading-entry',
+        component: './reading-entry',
+      },
+      { name: 'feedback', path: '/manage/feedback', component: './feedback' },
     ],
   },
   {

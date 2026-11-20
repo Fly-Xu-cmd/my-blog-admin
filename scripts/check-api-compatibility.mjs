@@ -1,5 +1,5 @@
 import { pathToFileURL } from 'node:url';
-const capabilities = ['admin-header-auth', 'content-summaries', 'idempotent-create', 'dynamic-drafts', 'series-v1', 'about-page-v1', 'post-revisions-v1'];
+const capabilities = ['admin-header-auth', 'content-summaries', 'idempotent-create', 'dynamic-drafts', 'series-v1', 'about-page-v1', 'post-revisions-v1', 'site-settings-v1', 'reading-entry-v1', 'feedback-v1'];
 export function compatible(value) {
   return value?.ok === true && value.contractVersion === 1 && Array.isArray(value.capabilities) &&
     capabilities.every((name) => value.capabilities.includes(name));

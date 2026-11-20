@@ -7,7 +7,7 @@ test('admin readiness verifies actual release, index and hashed assets', async (
   const server = http.createServer((req, res) => {
     if (req.url.startsWith('/api/deployment/readiness')) {
       if (failure === 'api') res.statusCode = 503;
-      return res.end(JSON.stringify({ ok: true, contractVersion: 1, capabilities: ['admin-header-auth','content-summaries','idempotent-create','dynamic-drafts','series-v1', 'about-page-v1', 'post-revisions-v1'] }));
+      return res.end(JSON.stringify({ ok: true, contractVersion: 1, capabilities: ['admin-header-auth','content-summaries','idempotent-create','dynamic-drafts','series-v1', 'about-page-v1', 'post-revisions-v1', 'site-settings-v1', 'reading-entry-v1', 'feedback-v1'] }));
     }
     if (req.url.startsWith('/deploy-version')) return res.end(failure === 'marker' ? 'old' : 'current');
     if (req.url.startsWith('/?')) return res.end('<html><script src="/umi.hash.js"></script><link href="/umi.hash.css"></html>');
@@ -37,7 +37,7 @@ test('protected admin uses Basic Auth for site requests while keeping API auth i
   const server = http.createServer((req, res) => {
     if (req.url.startsWith('/api/deployment/readiness')) {
       if (req.headers.authorization) res.statusCode = 403;
-      return res.end(JSON.stringify({ ok: true, contractVersion: 1, capabilities: ['admin-header-auth','content-summaries','idempotent-create','dynamic-drafts','series-v1', 'about-page-v1', 'post-revisions-v1'] }));
+      return res.end(JSON.stringify({ ok: true, contractVersion: 1, capabilities: ['admin-header-auth','content-summaries','idempotent-create','dynamic-drafts','series-v1', 'about-page-v1', 'post-revisions-v1', 'site-settings-v1', 'reading-entry-v1', 'feedback-v1'] }));
     }
     if (req.headers.authorization !== expected) {
       res.statusCode = 401;
