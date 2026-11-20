@@ -1,7 +1,7 @@
 export default {
   'menu.manage.reading-entry': '首页阅读入口',
   'menu.manage.feedback': '私有反馈',
-  'menu.welcome': '欢迎',
+  'menu.welcome': '总览',
   'menu.more-blocks': '更多区块',
   'menu.home': '首页',
   'menu.admin': '管理页',

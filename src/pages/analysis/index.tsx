@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { getAnalyticsStats, type AnalyticsStats } from '@/services/nextjs';
+import ReportDateRange, { recentDates } from '@/components/ReportDateRange';
 const eventNames: Record<string, string> = {
   search: '搜索请求',
   search_empty: '无结果搜索',
@@ -25,7 +26,7 @@ const eventNames: Record<string, string> = {
   subscribe_click: '订阅入口点击',
 };
 export default function Analysis() {
-  const [range, setRange] = useState<'7d' | '30d'>('7d'),
+  const [dates, setDates] = useState(() => recentDates(7)),
     [kind, setKind] = useState('all'),
     [data, setData] = useState<AnalyticsStats | null>(null),
     [loading, setLoading] = useState(true),
@@ -35,7 +36,7 @@ export default function Analysis() {
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    void getAnalyticsStats(range, kind, controller.signal)
+    void getAnalyticsStats(dates, kind, controller.signal)
       .then((next) => {
         if (!controller.signal.aborted) setData(next);
       })
@@ -46,7 +47,7 @@ export default function Analysis() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [range, kind, reload]);
+  }, [dates, kind, reload]);
   const eventRows = Object.entries(eventNames).map(([event, name]) => ({
     event,
     name,
@@ -69,15 +70,8 @@ export default function Analysis() {
       title="数据分析"
       subTitle="了解读者从哪里来、看了什么，以及阅读入口是否有效"
       extra={
-        <Space>
-          <Segmented
-            value={range}
-            onChange={(value) => setRange(value as '7d' | '30d')}
-            options={[
-              { label: '近 7 天', value: '7d' },
-              { label: '近 30 天', value: '30d' },
-            ]}
-          />
+        <Space wrap>
+          <ReportDateRange value={dates} onChange={setDates} />
           <Button onClick={() => setReload((n) => n + 1)} loading={loading}>
             刷新
           </Button>

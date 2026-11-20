@@ -16,6 +16,7 @@ const valid = {
     'reading-entry-v1',
     'feedback-v1',
     'experience-v1',
+    'reporting-range-v1',
   ],
 };
 test('rejects old versions, incomplete capabilities, errors and malformed replies', () => {
@@ -33,11 +34,21 @@ test('rejects old versions, incomplete capabilities, errors and malformed replie
         'reading-entry-v1',
         'feedback-v1',
         'experience-v1',
+        'reporting-range-v1',
       ],
     },
   ])
     assert.equal(compatible(value), false);
   assert.equal(compatible(valid), true);
+  assert.equal(
+    compatible({
+      ...valid,
+      capabilities: valid.capabilities.filter(
+        (name) => name !== 'reporting-range-v1',
+      ),
+    }),
+    false,
+  );
   assert.equal(
     compatible({
       ...valid,

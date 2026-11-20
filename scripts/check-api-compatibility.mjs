@@ -11,6 +11,7 @@ const capabilities = [
   'reading-entry-v1',
   'feedback-v1',
   'experience-v1',
+  'reporting-range-v1',
 ];
 export function compatible(value) {
   return (

@@ -181,7 +181,10 @@ export default function FeedbackPage() {
         busy={saving || updating !== null}
         localDraft={false}
       />
-      <Card title="GitHub 讨论入口" style={{ marginBottom: 24 }}>
+      <Card title="讨论配置（暂存）" style={{ marginBottom: 24 }}>
+        <Typography.Paragraph type="secondary">
+          前台讨论入口已暂时关闭，现有地址仅保留为配置，不会展示给读者。公开讨论方案确定后再启用。
+        </Typography.Paragraph>
         {configError && <Alert type="error" showIcon message={configError} />}
         <Form
           form={form}

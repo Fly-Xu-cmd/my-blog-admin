@@ -1,4 +1,4 @@
-import { Alert, App, Button, Drawer, List, Space, Spin } from 'antd';
+import { Alert, App, Button, Modal, List, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
 import Preview from '@/components/SafeMarkdown';
 import { api } from '@/utils/api';
@@ -80,11 +80,14 @@ export default function PostHistory({
       >
         历史版本
       </Button>
-      <Drawer
+      <Modal
         title="文章历史版本"
-        width="70%"
+        width={960}
+        style={{ maxWidth: 'calc(100vw - 32px)', top: 40 }}
+        styles={{ body: { maxHeight: '75vh', overflowY: 'auto' } }}
+        footer={null}
         open={open}
-        onClose={() => setOpen(false)}
+        onCancel={() => setOpen(false)}
       >
         <Alert
           type="info"
@@ -142,7 +145,7 @@ export default function PostHistory({
             </>
           )}
         </Spin>
-      </Drawer>
+      </Modal>
     </>
   );
 }

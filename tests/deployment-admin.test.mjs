@@ -23,6 +23,7 @@ test('admin readiness verifies actual release, index and hashed assets', async (
             'reading-entry-v1',
             'feedback-v1',
             'experience-v1',
+            'reporting-range-v1',
           ],
         }),
       );
@@ -98,6 +99,7 @@ test('protected admin uses Basic Auth for site requests while keeping API auth i
             'reading-entry-v1',
             'feedback-v1',
             'experience-v1',
+            'reporting-range-v1',
           ],
         }),
       );

@@ -1,0 +1,11 @@
+@media (max-width: 600px) {
+  .popup [class~="ant-picker-panel-container"] {
+    max-width: calc(100vw - 24px);
+    max-height: 70vh;
+    overflow: auto;
+  }
+  .popup [class~="ant-picker-panel-layout"],
+  .popup [class~="ant-picker-panels"] { flex-direction: column; }
+  .popup [class~="ant-picker-presets"] { min-width: 0; width: auto; max-width: none; }
+  .popup [class~="ant-picker-presets"] ul { display: flex; flex-wrap: wrap; }
+}

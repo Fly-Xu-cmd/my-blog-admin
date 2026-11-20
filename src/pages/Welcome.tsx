@@ -16,6 +16,7 @@ import {
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { api } from '@/utils/api';
+import ReportDateRange, { recentDates } from '@/components/ReportDateRange';
 const labels: Record<string, string> = {
   post: '文章',
   TECH: '技术笔记',
@@ -47,20 +48,26 @@ type Overview = {
     unavailableCount: number;
   };
   updatedAt: string;
+  startDate: string;
+  endDate: string;
 };
 export default function Welcome() {
   const [data, setData] = useState<Overview | null>(null),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(true),
     [reload, setReload] = useState(0),
+    [dates, setDates] = useState(() => recentDates(30)),
     [timeline, setTimeline] = useState('published');
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    void api<{ data: Overview }>('/api/admin/content-stats', {
-      signal: controller.signal,
-    })
+    void api<{ data: Overview }>(
+      '/api/admin/content-stats?' + new URLSearchParams(dates),
+      {
+        signal: controller.signal,
+      },
+    )
       .then((r) => {
         if (!controller.signal.aborted) setData(r.data);
       })
@@ -71,7 +78,7 @@ export default function Welcome() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [reload]);
+  }, [reload, dates]);
   const trend =
     (timeline === 'published'
       ? data?.publishedTimeline
@@ -79,12 +86,15 @@ export default function Welcome() {
     )?.map((row) => ({ ...row, type: labels[row.kind] })) ?? [];
   return (
     <PageContainer
-      title="内容概览"
+      title="总览"
       subTitle="内容发布、待处理事项与首页配置"
       extra={
-        <Button onClick={() => setReload((n) => n + 1)} loading={loading}>
-          刷新概览
-        </Button>
+        <Space wrap>
+          <ReportDateRange value={dates} onChange={setDates} />
+          <Button onClick={() => setReload((n) => n + 1)} loading={loading}>
+            刷新总览
+          </Button>
+        </Space>
       }
     >
       {error && (
@@ -97,6 +107,10 @@ export default function Welcome() {
         />
       )}
       <Space direction="vertical" size={24} style={{ width: '100%' }}>
+        <Typography.Text type="secondary">
+          全站数量与待处理事项为当前累计；日期筛选仅影响内容趋势。
+          {data ? `趋势范围：${data.startDate} 至 ${data.endDate}` : ''}
+        </Typography.Text>
         <Row gutter={[16, 16]}>
           {(['post', 'TECH', 'ESSAY', 'dynamic'] as const).map((kind) => {
             const row = data?.counts.find((r) => r.kind === kind);
@@ -221,7 +235,7 @@ export default function Welcome() {
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
             <Card
-              title="近 30 天内容趋势"
+              title="内容趋势"
               extra={
                 <Segmented
                   value={timeline}
